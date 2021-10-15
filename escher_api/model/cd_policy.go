@@ -44,7 +44,7 @@ type CdPolicy struct {
 	PermissionCDPolicy *CdPolicyElement `json:"permissionCDPolicy,omitempty"`
 
 	// secret c d policy
-	SecretCDPolicy *CdPolicyElement `json:"secretCDPolicy,omitempty"`
+	SecretCDPolicy *SecretsCdPolicyElement `json:"secretCDPolicy,omitempty"`
 
 	// security context c d policy
 	SecurityContextCDPolicy *CdPolicyElement `json:"securityContextCDPolicy,omitempty"`
