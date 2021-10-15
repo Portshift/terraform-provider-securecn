@@ -1,6 +1,6 @@
 resource "securecn_k8s_cluster" "local" {
   name                       = "local"
-  kubernetes_cluster_context = "docker-desktop"
+  kubernetes_cluster_context = "kind-kind"
   orchestration_type         = "KUBERNETES"
 }
 
@@ -44,7 +44,7 @@ resource "securecn_cd_policy" "vault" {
     securecn_deployer.vault.id,
   ]
   secret_policy {
-    permissible_vulnerability_level = "HIGH"
+    permissible_vulnerability_level = "NO_KNOWN_RISK"
     enforcement_option              = "FAIL"
   }
 }

@@ -35,6 +35,18 @@ var cdPolicyElementSchema = &schema.Resource{
 	},
 }
 
+var secretPolicyElementSchema = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"permissible_vulnerability_level": {
+			Description:  "The level of risk accepted in this policy",
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: validation.StringInSlice([]string{"NO_KNOWN_RISK", "RISK_IDENTIFIED"}, false),
+		},
+		"enforcement_option": enforcementOptionSchema,
+	},
+}
+
 func ResourceCdPolicy() *schema.Resource {
 
 	return &schema.Resource{
@@ -92,7 +104,7 @@ func ResourceCdPolicy() *schema.Resource {
 				Optional:    true,
 				Type:        schema.TypeList,
 				MaxItems:    1,
-				Elem:        cdPolicyElementSchema,
+				Elem:        secretPolicyElementSchema,
 			},
 			"security_context_policy": {
 				Description: "Specify the cd policy's security context check profile",
@@ -274,8 +286,8 @@ func getCdPolicyFromConfig(d *schema.ResourceData, api *escherClient.MgmtService
 	enforcementOption = utils.ReadNestedStringFromTF(d, "secret_policy", "enforcement_option", 0)
 
 	if permissibleVulnerabilityLevel != "" && enforcementOption != "" {
-		cdPolicy.SecretCDPolicy = &model.CdPolicyElement{
-			PermissibleVulnerabilityLevel: model.Risk(permissibleVulnerabilityLevel),
+		cdPolicy.SecretCDPolicy = &model.SecretsCdPolicyElement{
+			PermissibleVulnerabilityLevel: model.CDPipelineSecretsFindingRisk(permissibleVulnerabilityLevel),
 			EnforcementOption:             model.EnforcementOption(enforcementOption),
 		}
 	}
