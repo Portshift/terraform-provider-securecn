@@ -26,6 +26,7 @@ A SecureCN deployment rule
 - **match_by_pod_any** (Block List, Max: 1) The rule will match on any pod (see [below for nested schema](#nestedblock--match_by_pod_any))
 - **match_by_pod_label** (Block List, Max: 1) The rule will match using pod labels (see [below for nested schema](#nestedblock--match_by_pod_label))
 - **match_by_pod_name** (Block List, Max: 1) The rule will match using pod names (see [below for nested schema](#nestedblock--match_by_pod_name))
+- **scope** (String) Scope defines the scope of this rule
 - **status** (String)
 
 <a id="nestedblock--match_by_pod_any"></a>
