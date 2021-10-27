@@ -39,6 +39,9 @@ type CdAppRule struct {
 	// Required: true
 	Name *string `json:"name"`
 
+	// A way to identify the rule scope. Only one of the below should be not null, and used.
+	Scope WorkloadRuleScopeType `json:"scope,omitempty"`
+
 	// status
 	// Required: true
 	Status AppRuleStatus `json:"status"`
@@ -66,6 +69,8 @@ func (m *CdAppRule) UnmarshalJSON(raw []byte) error {
 		ID strfmt.UUID `json:"id,omitempty"`
 
 		Name *string `json:"name"`
+
+		Scope WorkloadRuleScopeType `json:"scope,omitempty"`
 
 		Status AppRuleStatus `json:"status"`
 	}
@@ -103,6 +108,9 @@ func (m *CdAppRule) UnmarshalJSON(raw []byte) error {
 	// name
 	result.Name = data.Name
 
+	// scope
+	result.Scope = data.Scope
+
 	// status
 	result.Status = data.Status
 
@@ -124,6 +132,8 @@ func (m CdAppRule) MarshalJSON() ([]byte, error) {
 
 		Name *string `json:"name"`
 
+		Scope WorkloadRuleScopeType `json:"scope,omitempty"`
+
 		Status AppRuleStatus `json:"status"`
 	}{
 
@@ -134,6 +144,8 @@ func (m CdAppRule) MarshalJSON() ([]byte, error) {
 		ID: m.ID,
 
 		Name: m.Name,
+
+		Scope: m.Scope,
 
 		Status: m.Status,
 	},
@@ -172,6 +184,10 @@ func (m *CdAppRule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateName(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateScope(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -229,6 +245,22 @@ func (m *CdAppRule) validateID(formats strfmt.Registry) error {
 func (m *CdAppRule) validateName(formats strfmt.Registry) error {
 
 	if err := validate.Required("name", "body", m.Name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *CdAppRule) validateScope(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Scope) { // not required
+		return nil
+	}
+
+	if err := m.Scope.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("scope")
+		}
 		return err
 	}
 

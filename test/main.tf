@@ -48,3 +48,17 @@ resource "securecn_cd_policy" "vault" {
     enforcement_option              = "FAIL"
   }
 }
+
+resource "securecn_deployment_rule" "rule1" {
+  rule_name = "terraform deployment rule"
+
+  match_by_pod_name {
+    names                             = ["Finance"]
+    vulnerability_severity_level      = "HIGH"
+    vulnerability_on_violation_action = "BLOCK"
+    psp_profile                       = "Baseline"
+    psp_on_violation_action           = "ENFORCE"
+  }
+
+  scope = "any"
+}

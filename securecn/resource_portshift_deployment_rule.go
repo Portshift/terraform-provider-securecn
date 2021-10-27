@@ -23,6 +23,7 @@ const deploymentRuleGroupName = "Terraform automated rules"
 const deploymentRuleNameFieldName = "rule_name"
 const deploymentRuleActionFieldName = "action"
 const deploymentRuleStatusFieldName = "status"
+const deploymentRuleScopeFieldName = "scope"
 
 const matchByPodNameFieldName = "match_by_pod_name"
 const matchByPodLabelFieldName = "match_by_pod_label"
@@ -59,6 +60,13 @@ func ResourceDeploymentRule() *schema.Resource {
 				Optional:     true,
 				Default:      "ENABLED",
 				ValidateFunc: validation.StringInSlice([]string{"ENABLED"}, false),
+			},
+			deploymentRuleScopeFieldName: {
+				Description:  "Scope defines the scope of this rule",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "ANY",
+				ValidateFunc: validation.StringInSlice([]string{"ANY", "CLUSTER", "ENVIRONMENT"}, true),
 			},
 			matchByPodNameFieldName: {
 				Description:  "The rule will match using pod names",
@@ -328,6 +336,7 @@ func getDeploymentRuleFromConfig(ctx context.Context, d *schema.ResourceData, se
 	name := d.Get(deploymentRuleNameFieldName).(string)
 	action := getRuleActionFromString(d.Get(deploymentRuleActionFieldName).(string))
 	status := getStatusFromString(d.Get(deploymentRuleStatusFieldName).(string))
+	scope := getScopeFromString(d.Get(deploymentRuleScopeFieldName).(string))
 
 	rule := &model.CdAppRule{
 		ID:        "",
@@ -335,6 +344,7 @@ func getDeploymentRuleFromConfig(ctx context.Context, d *schema.ResourceData, se
 		GroupName: deploymentRuleGroupName,
 		Name:      &name,
 		Status:    status,
+		Scope:     scope,
 	}
 
 	app, err := getApp(ctx, d, serviceApi, httpClientWrapper)
@@ -347,6 +357,17 @@ func getDeploymentRuleFromConfig(ctx context.Context, d *schema.ResourceData, se
 	err = validateDeploymentRuleFromConfig(rule)
 
 	return rule, err
+}
+
+func getScopeFromString(scope string) model.WorkloadRuleScopeType {
+	switch strings.ToLower(scope) {
+	case "cluster":
+		return model.WorkloadRuleScopeTypeClusterNameRuleType
+	case "environment":
+		return model.WorkloadRuleScopeTypeEnvironmentNameRuleType
+	default:
+		return model.WorkloadRuleScopeTypeAnyRuleType
+	}
 }
 
 func getApp(ctx context.Context, d *schema.ResourceData, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) (model.WorkloadRuleType, error) {
