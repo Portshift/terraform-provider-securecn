@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    securecn = {
+      source = "Portshift/securecn"
+      version = ">= 1.0.0"
+    }
+  }
+}
+
 resource "securecn_k8s_cluster" "local" {
   name                       = "local"
   kubernetes_cluster_context = "kind-kind"
@@ -45,6 +54,18 @@ resource "securecn_cd_policy" "vault" {
   secret_policy {
     permissible_vulnerability_level = "NO_KNOWN_RISK"
     enforcement_option              = "FAIL"
+  }
+}
+
+resource "securecn_connection_rule" "securecn_connection_rule" {
+  rule_name = "terraform connection rule"
+
+  source_by_pod_any {
+    vulnerability_severity_level = "HIGH"
+  }
+
+  destination_by_pod_any {
+    vulnerability_severity_level = "HIGH"
   }
 }
 
