@@ -6,16 +6,15 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"terraform-provider-securecn/internal/client"
+	"terraform-provider-securecn/internal/escher_api/escherClient"
+	model2 "terraform-provider-securecn/internal/escher_api/model"
+	utils2 "terraform-provider-securecn/internal/utils"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
-	"terraform-provider-securecn/client"
-	"terraform-provider-securecn/escher_api/escherClient"
-	"terraform-provider-securecn/escher_api/model"
-	"terraform-provider-securecn/utils"
 )
 
 const deploymentRuleGroupName = "Terraform automated rules"
@@ -201,7 +200,7 @@ func resourceDeploymentRuleCreate(ctx context.Context, d *schema.ResourceData, m
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	deploymentRuleFromConfig, err := getDeploymentRuleFromConfig(ctx, d, serviceApi, httpClientWrapper)
 	if err != nil {
@@ -225,7 +224,7 @@ func resourceDeploymentRuleRead(ctx context.Context, d *schema.ResourceData, m i
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	ruleId := d.Id()
 
 	currentRuleInSecureCN, err := serviceApi.GetDeploymentRule(ctx, httpClientWrapper.HttpClient, strfmt.UUID(ruleId))
@@ -249,7 +248,7 @@ func resourceDeploymentRuleUpdate(ctx context.Context, d *schema.ResourceData, m
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	rule, err := getDeploymentRuleFromConfig(ctx, d, serviceApi, httpClientWrapper)
 	if err != nil {
@@ -273,7 +272,7 @@ func resourceDeploymentRuleDelete(ctx context.Context, d *schema.ResourceData, m
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	err := serviceApi.DeleteDeploymentRule(ctx, httpClientWrapper.HttpClient, strfmt.UUID(d.Id()))
 	if err != nil {
 		return diag.FromErr(err)
@@ -285,10 +284,10 @@ func resourceDeploymentRuleDelete(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func validateDeploymentRuleFromConfig(deploymentRuleFromConfig *model.CdAppRule) error {
+func validateDeploymentRuleFromConfig(deploymentRuleFromConfig *model2.CdAppRule) error {
 	log.Printf("[DEBUG] validating deployment rule config")
 	if deploymentRuleFromConfig.App().WorkloadRuleType() == "PodNameWorkloadRuleType" {
-		app := deploymentRuleFromConfig.App().(*model.PodNameWorkloadRuleType)
+		app := deploymentRuleFromConfig.App().(*model2.PodNameWorkloadRuleType)
 		pspPolicy := app.PodValidation.PodSecurityPolicy
 		vulPolicy := app.PodValidation.Vulnerability
 		err := validatePodValidation(pspPolicy, vulPolicy)
@@ -298,7 +297,7 @@ func validateDeploymentRuleFromConfig(deploymentRuleFromConfig *model.CdAppRule)
 	}
 
 	if deploymentRuleFromConfig.App().WorkloadRuleType() == "PodLabelWorkloadRuleType" {
-		app := deploymentRuleFromConfig.App().(*model.PodLabelWorkloadRuleType)
+		app := deploymentRuleFromConfig.App().(*model2.PodLabelWorkloadRuleType)
 		pspPolicy := app.PodValidation.PodSecurityPolicy
 		vulPolicy := app.PodValidation.Vulnerability
 		err := validatePodValidation(pspPolicy, vulPolicy)
@@ -308,7 +307,7 @@ func validateDeploymentRuleFromConfig(deploymentRuleFromConfig *model.CdAppRule)
 	}
 
 	if deploymentRuleFromConfig.App().WorkloadRuleType() == "PodAnyWorkloadRuleType" {
-		app := deploymentRuleFromConfig.App().(*model.PodAnyWorkloadRuleType)
+		app := deploymentRuleFromConfig.App().(*model2.PodAnyWorkloadRuleType)
 		pspPolicy := app.PodValidation.PodSecurityPolicy
 		vulPolicy := app.PodValidation.Vulnerability
 		err := validatePodValidation(pspPolicy, vulPolicy)
@@ -320,7 +319,7 @@ func validateDeploymentRuleFromConfig(deploymentRuleFromConfig *model.CdAppRule)
 	return nil
 }
 
-func validatePodValidation(pspPolicy *model.PodSecurityPolicyValidation, vulPolicy *model.VulnerabilityValidation) error {
+func validatePodValidation(pspPolicy *model2.PodSecurityPolicyValidation, vulPolicy *model2.VulnerabilityValidation) error {
 	if pspPolicy != nil && ((pspPolicy.OnViolationAction != "" && pspPolicy.PodSecurityPolicyID == nil) || (pspPolicy.OnViolationAction == "" && pspPolicy.PodSecurityPolicyID != nil)) {
 		return fmt.Errorf("invalid psp policy configuration. if 1 is set, the other must also be set. %s, %s", deploymentRulePSPProfileFieldName, deploymentRulePSPOnViolationActionFieldName)
 	}
@@ -330,7 +329,7 @@ func validatePodValidation(pspPolicy *model.PodSecurityPolicyValidation, vulPoli
 	return nil
 }
 
-func getDeploymentRuleFromConfig(ctx context.Context, d *schema.ResourceData, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) (*model.CdAppRule, error) {
+func getDeploymentRuleFromConfig(ctx context.Context, d *schema.ResourceData, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) (*model2.CdAppRule, error) {
 	log.Print("[DEBUG] getting deployment rule from config")
 
 	name := d.Get(deploymentRuleNameFieldName).(string)
@@ -338,7 +337,7 @@ func getDeploymentRuleFromConfig(ctx context.Context, d *schema.ResourceData, se
 	status := getStatusFromString(d.Get(deploymentRuleStatusFieldName).(string))
 	scope := getScopeFromString(d.Get(deploymentRuleScopeFieldName).(string))
 
-	rule := &model.CdAppRule{
+	rule := &model2.CdAppRule{
 		ID:        "",
 		Action:    action,
 		GroupName: deploymentRuleGroupName,
@@ -352,33 +351,33 @@ func getDeploymentRuleFromConfig(ctx context.Context, d *schema.ResourceData, se
 		return nil, err
 	}
 
-	rule.SetApp(app.(model.WorkloadRuleType))
+	rule.SetApp(app.(model2.WorkloadRuleType))
 
 	err = validateDeploymentRuleFromConfig(rule)
 
 	return rule, err
 }
 
-func getScopeFromString(scope string) model.WorkloadRuleScopeType {
+func getScopeFromString(scope string) model2.WorkloadRuleScopeType {
 	switch strings.ToLower(scope) {
 	case "cluster":
-		return model.WorkloadRuleScopeTypeClusterNameRuleType
+		return model2.WorkloadRuleScopeTypeClusterNameRuleType
 	case "environment":
-		return model.WorkloadRuleScopeTypeEnvironmentNameRuleType
+		return model2.WorkloadRuleScopeTypeEnvironmentNameRuleType
 	default:
-		return model.WorkloadRuleScopeTypeAnyRuleType
+		return model2.WorkloadRuleScopeTypeAnyRuleType
 	}
 }
 
-func getApp(ctx context.Context, d *schema.ResourceData, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) (model.WorkloadRuleType, error) {
+func getApp(ctx context.Context, d *schema.ResourceData, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) (model2.WorkloadRuleType, error) {
 	matchByPodName := d.Get(matchByPodNameFieldName).([]interface{})
 	if len(matchByPodName) != 0 {
-		podNames := utils.ReadNestedListStringFromTF(d, matchByPodNameFieldName, deploymentRuleNamesFieldName, 0)
+		podNames := utils2.ReadNestedListStringFromTF(d, matchByPodNameFieldName, deploymentRuleNamesFieldName, 0)
 		podValidation, err := getPodValidationFromConfig(ctx, d, matchByPodNameFieldName, serviceApi, httpClientWrapper)
 		if err != nil {
 			return nil, err
 		}
-		app := &model.PodNameWorkloadRuleType{
+		app := &model2.PodNameWorkloadRuleType{
 			Names:         podNames,
 			PodValidation: podValidation,
 		}
@@ -388,12 +387,12 @@ func getApp(ctx context.Context, d *schema.ResourceData, serviceApi *escherClien
 
 	matchByPodLabel := d.Get(matchByPodLabelFieldName).([]interface{})
 	if len(matchByPodLabel) != 0 {
-		podLabels := utils.GetLabelsFromMap(utils.ReadNestedMapStringFromTF(d, matchByPodLabelFieldName, deploymentRuleLabelsFieldName, 0))
+		podLabels := utils2.GetLabelsFromMap(utils2.ReadNestedMapStringFromTF(d, matchByPodLabelFieldName, deploymentRuleLabelsFieldName, 0))
 		podValidation, err := getPodValidationFromConfig(ctx, d, matchByPodLabelFieldName, serviceApi, httpClientWrapper)
 		if err != nil {
 			return nil, err
 		}
-		app := &model.PodLabelWorkloadRuleType{
+		app := &model2.PodLabelWorkloadRuleType{
 			Labels:        podLabels,
 			PodValidation: podValidation,
 		}
@@ -407,7 +406,7 @@ func getApp(ctx context.Context, d *schema.ResourceData, serviceApi *escherClien
 		if err != nil {
 			return nil, err
 		}
-		app := &model.PodAnyWorkloadRuleType{
+		app := &model2.PodAnyWorkloadRuleType{
 			PodValidation: podValidation,
 		}
 
@@ -417,22 +416,22 @@ func getApp(ctx context.Context, d *schema.ResourceData, serviceApi *escherClien
 	return nil, errors.New("can't get deployment rule app field from configuration")
 }
 
-func getPodValidationFromConfig(ctx context.Context, d *schema.ResourceData, mainField string, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) (*model.PodValidation, error) {
+func getPodValidationFromConfig(ctx context.Context, d *schema.ResourceData, mainField string, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) (*model2.PodValidation, error) {
 	vulnerabilityValidation := getVulnerabilityValidationFromConfig(d, mainField)
 	podSecurityPolicyValidation, err := getPspValidationFromConfig(ctx, d, mainField, serviceApi, httpClientWrapper)
 	if err != nil {
 		return nil, err
 	}
 
-	podValidation := &model.PodValidation{
+	podValidation := &model2.PodValidation{
 		PodSecurityPolicy: podSecurityPolicyValidation,
 		Vulnerability:     vulnerabilityValidation,
 	}
 	return podValidation, nil
 }
 
-func getPspValidationFromConfig(ctx context.Context, d *schema.ResourceData, mainField string, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) (*model.PodSecurityPolicyValidation, error) {
-	pspProfileName := utils.ReadNestedStringFromTF(d, mainField, deploymentRulePSPProfileFieldName, 0)
+func getPspValidationFromConfig(ctx context.Context, d *schema.ResourceData, mainField string, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) (*model2.PodSecurityPolicyValidation, error) {
+	pspProfileName := utils2.ReadNestedStringFromTF(d, mainField, deploymentRulePSPProfileFieldName, 0)
 	if pspProfileName == "" {
 		return nil, nil
 	}
@@ -441,10 +440,10 @@ func getPspValidationFromConfig(ctx context.Context, d *schema.ResourceData, mai
 		return nil, fmt.Errorf("%v\nmake sure a profile with that name exists: %s", err, pspProfileName)
 	}
 
-	actionString := utils.ReadNestedStringFromTF(d, mainField, deploymentRulePSPOnViolationActionFieldName, 0)
+	actionString := utils2.ReadNestedStringFromTF(d, mainField, deploymentRulePSPOnViolationActionFieldName, 0)
 	pspAction := getOnViolationActionFromString(actionString)
 	shouldMutate := isEnforce(actionString)
-	podSecurityPolicyValidation := &model.PodSecurityPolicyValidation{
+	podSecurityPolicyValidation := &model2.PodSecurityPolicyValidation{
 		OnViolationAction:   pspAction,
 		PodSecurityPolicyID: pspProfileId,
 		ShouldMutate:        &shouldMutate,
@@ -466,81 +465,81 @@ func getPspProfileIdFromName(ctx context.Context, serviceApi *escherClient.MgmtS
 
 }
 
-func getVulnerabilityValidationFromConfig(d *schema.ResourceData, mainField string) *model.VulnerabilityValidation {
-	vulSeverity := getVulSeverityFromString(utils.ReadNestedStringFromTF(d, mainField, deploymentRuleVulnerabilitySeverityFieldName, 0))
-	vulAction := getOnViolationActionFromString(utils.ReadNestedStringFromTF(d, mainField, deploymentRuleVulnerabilityOnViolationActionFieldName, 0))
+func getVulnerabilityValidationFromConfig(d *schema.ResourceData, mainField string) *model2.VulnerabilityValidation {
+	vulSeverity := getVulSeverityFromString(utils2.ReadNestedStringFromTF(d, mainField, deploymentRuleVulnerabilitySeverityFieldName, 0))
+	vulAction := getOnViolationActionFromString(utils2.ReadNestedStringFromTF(d, mainField, deploymentRuleVulnerabilityOnViolationActionFieldName, 0))
 	if vulSeverity == "" || vulAction == "" {
 		return nil
 	}
-	vulnerabilityValidation := &model.VulnerabilityValidation{
+	vulnerabilityValidation := &model2.VulnerabilityValidation{
 		HighestVulnerabilityAllowed: vulSeverity,
 		OnViolationAction:           vulAction,
 	}
 	return vulnerabilityValidation
 }
 
-func getOnViolationActionFromString(action string) model.OnViolationAction {
+func getOnViolationActionFromString(action string) model2.OnViolationAction {
 	if action == "" {
 		return ""
 	}
 	actionUpper := strings.ToUpper(action)
 
 	if actionUpper == "DETECT" {
-		return model.OnViolationActionDETECT
+		return model2.OnViolationActionDETECT
 	}
 	if actionUpper == "BLOCK" {
-		return model.OnViolationActionBLOCK
+		return model2.OnViolationActionBLOCK
 	}
 
 	// ENFORCE can only be ENFORCE_AND_DETECT for now
-	return model.OnViolationActionDETECT
+	return model2.OnViolationActionDETECT
 }
 
-func getVulSeverityFromString(severity string) model.VulnerabilitySeverity {
+func getVulSeverityFromString(severity string) model2.VulnerabilitySeverity {
 	if severity == "" {
 		return ""
 	}
 	severityUpper := strings.ToUpper(severity)
 
 	if severityUpper == "LOW" {
-		return model.VulnerabilitySeverityLOW
+		return model2.VulnerabilitySeverityLOW
 	} else if severityUpper == "MEDIUM" {
-		return model.VulnerabilitySeverityMEDIUM
+		return model2.VulnerabilitySeverityMEDIUM
 	} else if severityUpper == "HIGH" {
-		return model.VulnerabilitySeverityHIGH
+		return model2.VulnerabilitySeverityHIGH
 	} else if severityUpper == "CRITICAL" {
-		return model.VulnerabilitySeverityCRITICAL
+		return model2.VulnerabilitySeverityCRITICAL
 	}
 
-	return model.VulnerabilitySeverityUNKNOWN
+	return model2.VulnerabilitySeverityUNKNOWN
 }
 
 func isEnforce(pspAction string) bool {
 	return pspAction == "ENFORCE"
 }
 
-func getStatusFromString(status string) model.AppRuleStatus {
+func getStatusFromString(status string) model2.AppRuleStatus {
 	/*
 		for now we support only ENABLED
 	*/
 
 	//if status == "ENABLED" {
-	return model.AppRuleStatusENABLED
+	return model2.AppRuleStatusENABLED
 	//}
 
 }
 
-func getRuleActionFromString(actionString string) model.AppRuleType {
+func getRuleActionFromString(actionString string) model2.AppRuleType {
 	/*
 		for now we support only ALLOW
 	*/
 
 	//if action == "ALLOW" {
-	return model.AppRuleTypeALLOW
+	return model2.AppRuleTypeALLOW
 	//}
 }
 
-func updateDeploymentRuleMutableFields(d *schema.ResourceData, currentRuleInSecureCN *model.CdAppRule) error {
+func updateDeploymentRuleMutableFields(d *schema.ResourceData, currentRuleInSecureCN *model2.CdAppRule) error {
 	log.Print("[DEBUG] updating deployment rule mutable fields")
 
 	err := d.Set(deploymentRuleNameFieldName, currentRuleInSecureCN.Name)
@@ -562,7 +561,7 @@ func updateDeploymentRuleMutableFields(d *schema.ResourceData, currentRuleInSecu
 	if partTypeInSecureCN == "PodNameWorkloadRuleType" {
 		_ = d.Set(matchByPodLabelFieldName, nil)
 		_ = d.Set(matchByPodAnyFieldName, nil)
-		appInSecureCNNames := appInSecureCN.(*model.PodNameWorkloadRuleType)
+		appInSecureCNNames := appInSecureCN.(*model2.PodNameWorkloadRuleType)
 		appsInTf := make(map[string]interface{})
 		appsInTf[deploymentRuleVulnerabilitySeverityFieldName] = appInSecureCNNames.PodValidation.Vulnerability.HighestVulnerabilityAllowed
 		appsInTf[deploymentRuleVulnerabilityOnViolationActionFieldName] = appInSecureCNNames.PodValidation.Vulnerability.OnViolationAction
@@ -580,7 +579,7 @@ func updateDeploymentRuleMutableFields(d *schema.ResourceData, currentRuleInSecu
 	} else if partTypeInSecureCN == "PodLabelWorkloadRuleType" {
 		err = d.Set(matchByPodNameFieldName, nil)
 		err = d.Set(matchByPodAnyFieldName, nil)
-		appInSecureCNLabels := appInSecureCN.(*model.PodLabelWorkloadRuleType)
+		appInSecureCNLabels := appInSecureCN.(*model2.PodLabelWorkloadRuleType)
 		appsInTf := make(map[string]interface{})
 		appsInTf[deploymentRuleVulnerabilitySeverityFieldName] = appInSecureCNLabels.PodValidation.Vulnerability.HighestVulnerabilityAllowed
 		appsInTf[deploymentRuleVulnerabilityOnViolationActionFieldName] = appInSecureCNLabels.PodValidation.Vulnerability.OnViolationAction
@@ -591,14 +590,14 @@ func updateDeploymentRuleMutableFields(d *schema.ResourceData, currentRuleInSecu
 			pspAction = "ENFORCE"
 		}
 		appsInTf[deploymentRulePSPOnViolationActionFieldName] = pspAction
-		appsInTf[deploymentRuleLabelsFieldName] = utils.GetListStringFromLabels(appInSecureCNLabels.Labels)
+		appsInTf[deploymentRuleLabelsFieldName] = utils2.GetListStringFromLabels(appInSecureCNLabels.Labels)
 		values := make([]map[string]interface{}, 0, 1)
 		values = append(values, appsInTf)
 		err = d.Set(matchByPodLabelFieldName, values)
 	} else if partTypeInSecureCN == "PodAnyWorkloadRuleType" {
 		err = d.Set(matchByPodNameFieldName, nil)
 		err = d.Set(matchByPodLabelFieldName, nil)
-		appInSecureCNAny := appInSecureCN.(*model.PodAnyWorkloadRuleType)
+		appInSecureCNAny := appInSecureCN.(*model2.PodAnyWorkloadRuleType)
 		appsInTf := make(map[string]interface{})
 		appsInTf[deploymentRuleVulnerabilitySeverityFieldName] = appInSecureCNAny.PodValidation.Vulnerability.HighestVulnerabilityAllowed
 		appsInTf[deploymentRuleVulnerabilityOnViolationActionFieldName] = appInSecureCNAny.PodValidation.Vulnerability.OnViolationAction

@@ -10,17 +10,16 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"terraform-provider-securecn/internal/client"
+	"terraform-provider-securecn/internal/escher_api/escherClient"
+	"terraform-provider-securecn/internal/escher_api/model"
+	utils2 "terraform-provider-securecn/internal/utils"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/spf13/cast"
-
-	"terraform-provider-securecn/client"
-	"terraform-provider-securecn/escher_api/escherClient"
-	escherModel "terraform-provider-securecn/escher_api/model"
-	"terraform-provider-securecn/utils"
 )
 
 const secureCNBundleFilePath = "securecn_bundle.tar.gz"
@@ -74,9 +73,9 @@ func ResourceCluster() *schema.Resource {
 			KubernetesClusterContextFieldName: {Type: schema.TypeString, Required: true, ForceNew: true, Description: "The k8s context name of the cluster",
 				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
 					k8sContext := val.(string)
-					output, _ := utils.ExecBashCommand(kubectlGetAllContextsCommand)
+					output, _ := utils2.ExecBashCommand(kubectlGetAllContextsCommand)
 					allContexts := strings.Split(output, " ")
-					if !(utils.ContainsString(allContexts, k8sContext)) {
+					if !(utils2.ContainsString(allContexts, k8sContext)) {
 						errs = append(errs, fmt.Errorf("k8sContext %s does not exist", k8sContext))
 					}
 					return
@@ -209,7 +208,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	kubernetesCluster, err := getClusterFromConfig(d)
 	if err != nil {
@@ -240,7 +239,7 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	clusterId := d.Id()
 
 	secureCNCluster, err := serviceApi.GetKubernetesClusterById(ctx, httpClientWrapper.HttpClient, strfmt.UUID(clusterId))
@@ -279,7 +278,7 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	kubernetesClusterFromConfig, err := getClusterFromConfig(d)
 	if err != nil {
@@ -315,7 +314,7 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	clusterId := strfmt.UUID(d.Id())
 
 	k8sContext := d.Get(KubernetesClusterContextFieldName).(string)
@@ -343,13 +342,13 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 	}
 
 	if tokenInjection {
-		err = utils.MakeExecutable(vaultCertsGenFilePath)
+		err = utils2.MakeExecutable(vaultCertsGenFilePath)
 		if err != nil {
 			return err
 		}
 	}
 
-	currentContext, err := utils.ExecBashCommand(getCurrentK8ContextCommand)
+	currentContext, err := utils2.ExecBashCommand(getCurrentK8ContextCommand)
 	if err != nil {
 		return err
 	}
@@ -359,7 +358,7 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 		return err
 	}
 
-	_, err = utils.ExecuteScript(scriptFilePath, multiClusterFolder)
+	_, err = utils2.ExecuteScript(scriptFilePath, multiClusterFolder)
 	log.Print("[DEBUG] agent installed successfully")
 
 	if err != nil {
@@ -391,7 +390,7 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 func deleteAgent(context string) error {
 	log.Printf("[DEBUG] deleting agent from context: " + context)
 
-	currentContext, err := utils.ExecBashCommand(getCurrentK8ContextCommand)
+	currentContext, err := utils2.ExecBashCommand(getCurrentK8ContextCommand)
 	if err != nil {
 		return err
 	}
@@ -401,7 +400,7 @@ func deleteAgent(context string) error {
 		return err
 	}
 
-	_, err = utils.ExecBashCommand(uninstallAgentCommand)
+	_, err = utils2.ExecBashCommand(uninstallAgentCommand)
 	if err != nil {
 		_ = changeK8Context(currentContext, err)
 		return err
@@ -418,7 +417,7 @@ func deleteAgent(context string) error {
 func changeK8Context(context string, err error) error {
 	log.Print("[DEBUG] changing k8s context to " + context)
 	changeContextCommand := fmt.Sprintf(useK8ContextCommandFormat, context)
-	_, err = utils.ExecBashCommand(changeContextCommand)
+	_, err = utils2.ExecBashCommand(changeContextCommand)
 
 	if err != nil {
 		log.Print("[DEBUG] failed to change k8s context: " + err.Error())
@@ -440,14 +439,14 @@ func downloadAndExtractBundle(ctx context.Context, serviceApi *escherClient.Mgmt
 	}
 	defer os.Remove(secureCNBundleFilePath)
 
-	err = utils.ExtractTarGz(open)
+	err = utils2.ExtractTarGz(open)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func getClusterFromConfig(d *schema.ResourceData) (*escherModel.KubernetesCluster, error) {
+func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, error) {
 	log.Print("[DEBUG] getting cluster from config")
 
 	clusterName := d.Get(NameFieldName).(string)
@@ -458,9 +457,9 @@ func getClusterFromConfig(d *schema.ResourceData) (*escherModel.KubernetesCluste
 	istioVersion := d.Get(IstioVersionFieldName).(string)
 	istioIngressEnabled := d.Get(IstioIngressEnabledFieldName).(bool)
 	istioIngressAnnotationsRaw := cast.ToStringMapString(d.Get(IstioIngressAnnotationsFieldName))
-	var istioIngressAnnotations []*escherModel.KubernetesAnnotation
+	var istioIngressAnnotations []*model.KubernetesAnnotation
 	for k, v := range istioIngressAnnotationsRaw {
-		istioIngressAnnotations = append(istioIngressAnnotations, &escherModel.KubernetesAnnotation{
+		istioIngressAnnotations = append(istioIngressAnnotations, &model.KubernetesAnnotation{
 			Key:   &k,
 			Value: &v,
 		})
@@ -474,16 +473,16 @@ func getClusterFromConfig(d *schema.ResourceData) (*escherModel.KubernetesCluste
 
 	isIstioAlreadyInstalled := istioVersion != ""
 	enableProxy := externalHttpsProxy != ""
-	clusterPodDefinitionSource := escherModel.ClusterPodDefinitionSourceKUBERNETES
+	clusterPodDefinitionSource := model.ClusterPodDefinitionSourceKUBERNETES
 	if cdPodTemplate {
-		clusterPodDefinitionSource = escherModel.ClusterPodDefinitionSourceCD
+		clusterPodDefinitionSource = model.ClusterPodDefinitionSourceCD
 	}
 
-	proxyConfig := &escherModel.ProxyConfiguration{
+	proxyConfig := &model.ProxyConfiguration{
 		EnableProxy: &enableProxy,
 		HTTPSProxy:  externalHttpsProxy,
 	}
-	istioParams := &escherModel.IstioInstallationParameters{
+	istioParams := &model.IstioInstallationParameters{
 		IsIstioAlreadyInstalled: &isIstioAlreadyInstalled,
 		IstioVersion:            istioVersion,
 	}
@@ -495,7 +494,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*escherModel.KubernetesCluste
 	enableTLSInspection := d.Get(TLSInspectionFieldName).(bool)
 	enableTokenInjection := d.Get(TokenInjectionFieldName).(bool)
 	enableTraceAnalyzer := d.Get(TraceAnalyzerFieldName).(bool)
-	cluster := &escherModel.KubernetesCluster{
+	cluster := &model.KubernetesCluster{
 		AgentFailClose:                    &failClose,
 		CiImageValidation:                 &ciImageValidation,
 		RestrictRegistires:                &restrictRegistries,
@@ -521,33 +520,33 @@ func getClusterFromConfig(d *schema.ResourceData) (*escherModel.KubernetesCluste
 		TraceAnalyzerEnabled:              &enableTraceAnalyzer,
 	}
 
-	externalCaId := utils.ReadNestedStringFromTF(d, ExternalCAFieldName, "id", 0)
-	externalCaName := utils.ReadNestedStringFromTF(d, ExternalCAFieldName, "name", 0)
+	externalCaId := utils2.ReadNestedStringFromTF(d, ExternalCAFieldName, "id", 0)
+	externalCaName := utils2.ReadNestedStringFromTF(d, ExternalCAFieldName, "name", 0)
 	if externalCaId != "" {
-		cluster.ExternalCa = &escherModel.ExternalCaDetails{
+		cluster.ExternalCa = &model.ExternalCaDetails{
 			ID:   strfmt.UUID(externalCaId),
 			Name: externalCaName,
 		}
 	}
 
-	internalRegistryUrl := utils.ReadNestedStringFromTF(d, InternalRegistryFieldName, "url", 0)
+	internalRegistryUrl := utils2.ReadNestedStringFromTF(d, InternalRegistryFieldName, "url", 0)
 	if internalRegistryUrl != "" {
 		internalRegistryEnabled := true
-		cluster.InternalRegistryParameters = &escherModel.InternalRegistryParameters{
+		cluster.InternalRegistryParameters = &model.InternalRegistryParameters{
 			InternalRegistryEnabled: &internalRegistryEnabled,
 			InternalRegistry:        internalRegistryUrl,
 		}
 	}
 
-	proxyInitLimitsCpu := utils.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_init_limits_cpu", 0)
-	proxyInitLimitsMemory := utils.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_init_limits_memory", 0)
-	proxyInitRequestsCpu := utils.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_init_requests_cpu", 0)
-	proxyInitRequestsMemory := utils.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_init_requests_memory", 0)
-	proxyLimitsCpu := utils.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_limits_cpu", 0)
-	proxyLimitsMemory := utils.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_limits_memory", 0)
-	proxyRequestsCpu := utils.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_requests_cpu", 0)
-	proxyRequestsMemory := utils.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_requests_memory", 0)
-	cluster.SidecarsResources = &escherModel.SidecarsResource{
+	proxyInitLimitsCpu := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_init_limits_cpu", 0)
+	proxyInitLimitsMemory := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_init_limits_memory", 0)
+	proxyInitRequestsCpu := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_init_requests_cpu", 0)
+	proxyInitRequestsMemory := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_init_requests_memory", 0)
+	proxyLimitsCpu := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_limits_cpu", 0)
+	proxyLimitsMemory := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_limits_memory", 0)
+	proxyRequestsCpu := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_requests_cpu", 0)
+	proxyRequestsMemory := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_requests_memory", 0)
+	cluster.SidecarsResources = &model.SidecarsResource{
 		ProxyInitLimitsCPU:      int64(proxyInitLimitsCpu),
 		ProxyInitLimitsMemory:   int64(proxyInitLimitsMemory),
 		ProxyInitRequestsCPU:    int64(proxyInitRequestsCpu),
@@ -582,7 +581,7 @@ func downloadFile(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 	return nil
 }
 
-func updateMutableFields(d *schema.ResourceData, secureCNCluster *escherModel.KubernetesCluster) {
+func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.KubernetesCluster) {
 	log.Print("[DEBUG] updating mutable fields agent")
 
 	_ = d.Set("name", secureCNCluster.Name)
@@ -623,7 +622,7 @@ func validateConfig(d *schema.ResourceData) error {
 	return nil
 }
 
-func updateAgent(context string, multiClusterFolder string, clusterInTerraformConfig *escherModel.KubernetesCluster, tokenInjection bool, prevIsMultiCluster bool, prevConnectionControl bool, prevAgentFailClose bool, prevIsPersistent bool, prevProxyConfiguration escherModel.ProxyConfiguration, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID) error {
+func updateAgent(context string, multiClusterFolder string, clusterInTerraformConfig *model.KubernetesCluster, tokenInjection bool, prevIsMultiCluster bool, prevConnectionControl bool, prevAgentFailClose bool, prevIsPersistent bool, prevProxyConfiguration model.ProxyConfiguration, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID) error {
 	needsUpdate := *clusterInTerraformConfig.IsMultiCluster != prevIsMultiCluster
 	needsUpdate = needsUpdate || *clusterInTerraformConfig.EnableConnectionsControl != prevConnectionControl
 	needsUpdate = needsUpdate || *clusterInTerraformConfig.AgentFailClose != prevAgentFailClose

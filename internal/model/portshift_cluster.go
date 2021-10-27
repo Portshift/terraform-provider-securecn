@@ -1,6 +1,8 @@
 package model
 
-import "terraform-provider-securecn/escher_api/model"
+import (
+	"terraform-provider-securecn/internal/escher_api/model"
+)
 
 type Cluster struct {
 	ID            string

@@ -3,17 +3,16 @@ package securecn
 import (
 	"context"
 	"log"
+	"terraform-provider-securecn/internal/client"
+	"terraform-provider-securecn/internal/escher_api/escherClient"
+	model2 "terraform-provider-securecn/internal/escher_api/model"
+	utils2 "terraform-provider-securecn/internal/utils"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/spf13/cast"
-
-	"terraform-provider-securecn/client"
-	"terraform-provider-securecn/escher_api/escherClient"
-	"terraform-provider-securecn/escher_api/model"
-	"terraform-provider-securecn/utils"
 )
 
 var enforcementOptionSchema = &schema.Schema{
@@ -127,14 +126,14 @@ func resourceCdPolicyCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	cdPolicy, err := getCdPolicyFromConfig(d, serviceApi)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	params := model.PostCdPolicyParams{
+	params := model2.PostCdPolicyParams{
 		Body:    cdPolicy,
 		Context: ctx,
 	}
@@ -154,9 +153,9 @@ func resourceCdPolicyRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
-	params := model.GetCdPolicyParams{
+	params := model2.GetCdPolicyParams{
 		Context: ctx,
 	}
 
@@ -177,7 +176,7 @@ func resourceCdPolicyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	return nil
 }
 
-func updateCdPolicyMutableFields(d *schema.ResourceData, policy *model.CdPolicy) error {
+func updateCdPolicyMutableFields(d *schema.ResourceData, policy *model2.CdPolicy) error {
 	return nil
 }
 
@@ -191,14 +190,14 @@ func resourceCdPolicyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	cdPolicy, err := getCdPolicyFromConfig(d, serviceApi)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	params := model.PutCdPolicyPolicyIDParams{
+	params := model2.PutCdPolicyPolicyIDParams{
 		PolicyID: strfmt.UUID(d.Id()),
 		Body:     cdPolicy,
 		Context:  ctx,
@@ -219,9 +218,9 @@ func resourceCdPolicyDelete(ctx context.Context, d *schema.ResourceData, m inter
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
-	params := model.DeleteCdPolicyPolicyIDParams{
+	params := model2.DeleteCdPolicyPolicyIDParams{
 		PolicyID: strfmt.UUID(d.Id()),
 		Context:  ctx,
 	}
@@ -243,7 +242,7 @@ func validateCdPolicyConfig(d *schema.ResourceData) error {
 	return nil
 }
 
-func getCdPolicyFromConfig(d *schema.ResourceData, api *escherClient.MgmtServiceApiCtx) (*model.CdPolicy, error) {
+func getCdPolicyFromConfig(d *schema.ResourceData, api *escherClient.MgmtServiceApiCtx) (*model2.CdPolicy, error) {
 	log.Print("[DEBUG] getting cd policy from config")
 
 	name := d.Get(nameFieldName).(string)
@@ -255,50 +254,50 @@ func getCdPolicyFromConfig(d *schema.ResourceData, api *escherClient.MgmtService
 		deployerUUIDs = append(deployerUUIDs, strfmt.UUID(deployerId))
 	}
 
-	cdPolicy := &model.CdPolicy{
+	cdPolicy := &model2.CdPolicy{
 		Name:        &name,
 		Deployers:   deployerUUIDs,
 		Description: description,
 	}
 
-	apiSecurityProfile := utils.ReadNestedStringFromTF(d, "api_security_policy", "api_security_profile", 0)
-	enforcementOption := utils.ReadNestedStringFromTF(d, "api_security_policy", "enforcement_option", 0)
+	apiSecurityProfile := utils2.ReadNestedStringFromTF(d, "api_security_policy", "api_security_profile", 0)
+	enforcementOption := utils2.ReadNestedStringFromTF(d, "api_security_policy", "enforcement_option", 0)
 
 	if apiSecurityProfile != "" && enforcementOption != "" {
 		apiSecurityProfileUUID := strfmt.UUID(apiSecurityProfile)
-		cdPolicy.APISecurityCdPolicy = &model.APISecurityCdPolicyElement{
+		cdPolicy.APISecurityCdPolicy = &model2.APISecurityCdPolicyElement{
 			APISecurityProfile: &apiSecurityProfileUUID,
-			EnforcementOption:  model.EnforcementOption(enforcementOption),
+			EnforcementOption:  model2.EnforcementOption(enforcementOption),
 		}
 	}
 
-	permissibleVulnerabilityLevel := utils.ReadNestedStringFromTF(d, "permission_policy", "permissible_vulnerability_level", 0)
-	enforcementOption = utils.ReadNestedStringFromTF(d, "permission_policy", "enforcement_option", 0)
+	permissibleVulnerabilityLevel := utils2.ReadNestedStringFromTF(d, "permission_policy", "permissible_vulnerability_level", 0)
+	enforcementOption = utils2.ReadNestedStringFromTF(d, "permission_policy", "enforcement_option", 0)
 
 	if permissibleVulnerabilityLevel != "" && enforcementOption != "" {
-		cdPolicy.PermissionCDPolicy = &model.CdPolicyElement{
-			PermissibleVulnerabilityLevel: model.Risk(permissibleVulnerabilityLevel),
-			EnforcementOption:             model.EnforcementOption(enforcementOption),
+		cdPolicy.PermissionCDPolicy = &model2.CdPolicyElement{
+			PermissibleVulnerabilityLevel: model2.Risk(permissibleVulnerabilityLevel),
+			EnforcementOption:             model2.EnforcementOption(enforcementOption),
 		}
 	}
 
-	permissibleVulnerabilityLevel = utils.ReadNestedStringFromTF(d, "secret_policy", "permissible_vulnerability_level", 0)
-	enforcementOption = utils.ReadNestedStringFromTF(d, "secret_policy", "enforcement_option", 0)
+	permissibleVulnerabilityLevel = utils2.ReadNestedStringFromTF(d, "secret_policy", "permissible_vulnerability_level", 0)
+	enforcementOption = utils2.ReadNestedStringFromTF(d, "secret_policy", "enforcement_option", 0)
 
 	if permissibleVulnerabilityLevel != "" && enforcementOption != "" {
-		cdPolicy.SecretCDPolicy = &model.SecretsCdPolicyElement{
-			PermissibleVulnerabilityLevel: model.CDPipelineSecretsFindingRisk(permissibleVulnerabilityLevel),
-			EnforcementOption:             model.EnforcementOption(enforcementOption),
+		cdPolicy.SecretCDPolicy = &model2.SecretsCdPolicyElement{
+			PermissibleVulnerabilityLevel: model2.CDPipelineSecretsFindingRisk(permissibleVulnerabilityLevel),
+			EnforcementOption:             model2.EnforcementOption(enforcementOption),
 		}
 	}
 
-	permissibleVulnerabilityLevel = utils.ReadNestedStringFromTF(d, "security_context_policy", "permissible_vulnerability_level", 0)
-	enforcementOption = utils.ReadNestedStringFromTF(d, "security_context_policy", "enforcement_option", 0)
+	permissibleVulnerabilityLevel = utils2.ReadNestedStringFromTF(d, "security_context_policy", "permissible_vulnerability_level", 0)
+	enforcementOption = utils2.ReadNestedStringFromTF(d, "security_context_policy", "enforcement_option", 0)
 
 	if permissibleVulnerabilityLevel != "" && enforcementOption != "" {
-		cdPolicy.SecurityContextCDPolicy = &model.CdPolicyElement{
-			PermissibleVulnerabilityLevel: model.Risk(permissibleVulnerabilityLevel),
-			EnforcementOption:             model.EnforcementOption(enforcementOption),
+		cdPolicy.SecurityContextCDPolicy = &model2.CdPolicyElement{
+			PermissibleVulnerabilityLevel: model2.Risk(permissibleVulnerabilityLevel),
+			EnforcementOption:             model2.EnforcementOption(enforcementOption),
 		}
 	}
 

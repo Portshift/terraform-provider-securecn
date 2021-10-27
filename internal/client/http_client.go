@@ -5,8 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-
-	"terraform-provider-securecn/escher_api/escherClient"
+	"terraform-provider-securecn/internal/escher_api/escherClient"
 )
 
 type HttpClientWrapper struct {
