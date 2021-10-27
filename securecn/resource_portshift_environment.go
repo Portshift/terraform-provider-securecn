@@ -8,7 +8,6 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"terraform-provider-securecn/client"
 	"terraform-provider-securecn/escher_api/escherClient"
@@ -18,7 +17,6 @@ import (
 
 const nameFieldName = "name"
 const descriptionFieldName = "description"
-const riskFieldName = "risk"
 const kubernetesEnvironmentFieldName = "kubernetes_environment"
 const clusterNameFieldName = "cluster_name"
 const namespacesNamesFieldName = "namespaces_by_names"
@@ -42,13 +40,6 @@ func ResourceEnvironment() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "",
-			},
-			riskFieldName: {
-				Required: true,
-				Type:     schema.TypeString,
-				ValidateFunc: validation.StringInSlice([]string{
-					"LOW", "MEDIUM", "HIGH",
-				}, true),
 			},
 			kubernetesEnvironmentFieldName: {
 				Description: "The kubernetes environments to include in the SecureCN env",
@@ -202,7 +193,6 @@ func getEnvironmentFromConfig(ctx context.Context, d *schema.ResourceData, servi
 
 	name := d.Get(nameFieldName).(string)
 	desc := d.Get(descriptionFieldName).(string)
-	risk := getEnvRiskFromString(d.Get(riskFieldName).(string))
 
 	kubernetesEnvs := make([]*model.KubernetesEnvironment, 0)
 
@@ -230,7 +220,6 @@ func getEnvironmentFromConfig(ctx context.Context, d *schema.ResourceData, servi
 		Description:            desc,
 		KubernetesEnvironments: kubernetesEnvs,
 		Name:                   &name,
-		Risk:                   risk,
 	}
 
 	return env, nil
@@ -247,26 +236,6 @@ func createKubernetesEnvFromConfig(namespaceNames []string, namespaceLabels []*m
 
 }
 
-func getEnvRiskFromString(risk string) model.Risk {
-	if risk == "HIGH" {
-		return model.RiskHIGH
-	} else if risk == "MEDIUM" {
-		return model.RiskMEDIUM
-	} else {
-		return model.RiskNORISK
-	}
-}
-
-func getStringFromEnvRisk(risk model.Risk) string {
-	if risk == model.RiskHIGH {
-		return "HIGH"
-	} else if risk == model.RiskMEDIUM {
-		return "MEDIUM"
-	} else {
-		return "LOW"
-	}
-}
-
 func updateEnvironmentMutableFields(d *schema.ResourceData, currentEnvInSecureCN *model.Environment) error {
 	log.Print("[DEBUG] updating environment mutable fields")
 
@@ -276,11 +245,6 @@ func updateEnvironmentMutableFields(d *schema.ResourceData, currentEnvInSecureCN
 	}
 
 	err = d.Set(descriptionFieldName, currentEnvInSecureCN.Description)
-	if err != nil {
-		return err
-	}
-
-	err = d.Set(riskFieldName, getStringFromEnvRisk(currentEnvInSecureCN.Risk))
 	if err != nil {
 		return err
 	}

@@ -258,12 +258,12 @@ func resourceDeploymentRuleUpdate(ctx context.Context, d *schema.ResourceData, m
 
 	rule.ID = strfmt.UUID(d.Id())
 
-	updatedEnv, err := serviceApi.UpdateDeploymentRule(ctx, httpClientWrapper.HttpClient, rule, rule.ID)
+	updatedRule, err := serviceApi.UpdateDeploymentRule(ctx, httpClientWrapper.HttpClient, rule, rule.ID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(string(updatedEnv.Payload.ID))
+	d.SetId(string(updatedRule.Payload.ID))
 
 	return resourceDeploymentRuleRead(ctx, d, m)
 }

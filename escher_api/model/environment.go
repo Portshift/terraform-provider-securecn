@@ -32,10 +32,6 @@ type Environment struct {
 	// Environment name. Must be unique.
 	// Required: true
 	Name *string `json:"name"`
-
-	// risk
-	// Required: true
-	Risk Risk `json:"risk"`
 }
 
 // Validate validates this environment
@@ -51,10 +47,6 @@ func (m *Environment) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateName(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateRisk(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -105,18 +97,6 @@ func (m *Environment) validateKubernetesEnvironments(formats strfmt.Registry) er
 func (m *Environment) validateName(formats strfmt.Registry) error {
 
 	if err := validate.Required("name", "body", m.Name); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Environment) validateRisk(formats strfmt.Registry) error {
-
-	if err := m.Risk.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("risk")
-		}
 		return err
 	}
 

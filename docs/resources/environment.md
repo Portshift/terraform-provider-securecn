@@ -19,7 +19,6 @@ A SecureCN environment
 
 - **kubernetes_environment** (Block List, Min: 1) The kubernetes environments to include in the SecureCN env (see [below for nested schema](#nestedblock--kubernetes_environment))
 - **name** (String)
-- **risk** (String)
 
 ### Optional
 

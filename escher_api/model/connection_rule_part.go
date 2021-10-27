@@ -146,13 +146,6 @@ func unmarshalConnectionRulePart(data []byte, consumer runtime.Consumer) (Connec
 		}
 		return &result, nil
 
-	case "EnvironmentRiskConnectionRulePart":
-		var result EnvironmentRiskConnectionRulePart
-		if err := consumer.Consume(buf2, &result); err != nil {
-			return nil, err
-		}
-		return &result, nil
-
 	case "ExternalConnectionRulePart":
 		var result ExternalConnectionRulePart
 		if err := consumer.Consume(buf2, &result); err != nil {

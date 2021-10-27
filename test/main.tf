@@ -7,7 +7,6 @@ resource "securecn_k8s_cluster" "local" {
 resource "securecn_environment" "env1" {
   name        = "env1"
   description = "desc"
-  risk        = "MEDIUM"
 
   kubernetes_environment {
     cluster_name = securecn_k8s_cluster.local.name
