@@ -9,15 +9,14 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"terraform-provider-securecn/internal/client"
+	model2 "terraform-provider-securecn/internal/escher_api/model"
+	utils2 "terraform-provider-securecn/internal/utils"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
-	"terraform-provider-securecn/client"
-	"terraform-provider-securecn/escher_api/model"
-	"terraform-provider-securecn/utils"
 )
 
 const connectionRuleGroupName = "Terraform automated rules"
@@ -318,7 +317,7 @@ func resourceConnectionRuleCreate(ctx context.Context, d *schema.ResourceData, m
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	ruleConfig, err := getConnectionRuleFromConfig(d)
 
@@ -343,7 +342,7 @@ func resourceConnectionRuleRead(ctx context.Context, d *schema.ResourceData, m i
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	ruleId := d.Id()
 
 	currentRuleInSecureCN, err := serviceApi.GetCdConnectionsRule(ctx, httpClientWrapper.HttpClient, strfmt.UUID(ruleId))
@@ -371,7 +370,7 @@ func resourceConnectionRuleUpdate(ctx context.Context, d *schema.ResourceData, m
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	rule, err := getConnectionRuleFromConfig(d)
 	if err != nil {
@@ -408,7 +407,7 @@ func resourceConnectionRuleDelete(ctx context.Context, d *schema.ResourceData, m
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	ruleId := strfmt.UUID(d.Id())
 
 	err := serviceApi.DeleteCdConnectionsRule(ctx, httpClientWrapper.HttpClient, ruleId)
@@ -425,7 +424,7 @@ func resourceConnectionRuleDelete(ctx context.Context, d *schema.ResourceData, m
 func validateConnectionRuleConfig(d *schema.ResourceData) error {
 	log.Printf("[DEBUG] validating config")
 
-	ips := utils.ReadNestedListStringFromTF(d, sourceIpRangeFieldName, ipsFieldName, 0)
+	ips := utils2.ReadNestedListStringFromTF(d, sourceIpRangeFieldName, ipsFieldName, 0)
 	for _, ip := range ips {
 		_, _, err := net.ParseCIDR(ip)
 		if err != nil {
@@ -433,7 +432,7 @@ func validateConnectionRuleConfig(d *schema.ResourceData) error {
 		}
 	}
 
-	ips = utils.ReadNestedListStringFromTF(d, destinationAddressIpRangeFieldName, ipsFieldName, 0)
+	ips = utils2.ReadNestedListStringFromTF(d, destinationAddressIpRangeFieldName, ipsFieldName, 0)
 	for _, ip := range ips {
 		_, _, err := net.ParseCIDR(ip)
 		if err != nil {
@@ -441,7 +440,7 @@ func validateConnectionRuleConfig(d *schema.ResourceData) error {
 		}
 	}
 
-	domains := utils.ReadNestedListStringFromTF(d, destinationAddressDomainFieldName, domainsFieldName, 0)
+	domains := utils2.ReadNestedListStringFromTF(d, destinationAddressDomainFieldName, domainsFieldName, 0)
 	for _, domain := range domains {
 		match, _ := regexp.MatchString("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$", domain)
 		if match != true {
@@ -452,7 +451,7 @@ func validateConnectionRuleConfig(d *schema.ResourceData) error {
 	return nil
 }
 
-func getConnectionRuleFromConfig(d *schema.ResourceData) (*model.CdConnectionRule, error) {
+func getConnectionRuleFromConfig(d *schema.ResourceData) (*model2.CdConnectionRule, error) {
 	log.Print("[DEBUG] getting connection rule from config")
 
 	ruleName := d.Get(connectionRuleNameFieldName).(string)
@@ -460,7 +459,7 @@ func getConnectionRuleFromConfig(d *schema.ResourceData) (*model.CdConnectionRul
 	status := d.Get(connectionRuleStatusNameFieldName).(string)
 	action := d.Get(connectionRuleActionNameFieldName).(string)
 
-	rule := &model.CdConnectionRule{
+	rule := &model2.CdConnectionRule{
 		Action:    getConnectionRuleActionFromString(action),
 		ID:        "",
 		Name:      ruleName,
@@ -478,41 +477,41 @@ func getConnectionRuleFromConfig(d *schema.ResourceData) (*model.CdConnectionRul
 		return nil, err
 	}
 
-	rule.SetSource(source.(model.ConnectionRulePart))
-	rule.SetDestination(destination.(model.ConnectionRulePart))
+	rule.SetSource(source.(model2.ConnectionRulePart))
+	rule.SetDestination(destination.(model2.ConnectionRulePart))
 
 	return rule, err
 }
 
-func getConnectionRuleActionFromString(action string) model.ConnectionRuleAction {
+func getConnectionRuleActionFromString(action string) model2.ConnectionRuleAction {
 	/*
 		for now we support only ALLOW
 	*/
 
 	//if action == "ALLOW" {
-	return model.ConnectionRuleActionALLOW
+	return model2.ConnectionRuleActionALLOW
 	//}
 }
 
 func getSource(d *schema.ResourceData) (interface{}, error) {
-	sourceIps := utils.ReadNestedListStringFromTF(d, sourceIpRangeFieldName, ipsFieldName, 0)
+	sourceIps := utils2.ReadNestedListStringFromTF(d, sourceIpRangeFieldName, ipsFieldName, 0)
 	sourceExternal := d.Get(sourceExternalFieldName).(bool)
-	sourcePodNames := utils.ReadNestedListStringFromTF(d, sourcePodNameFieldName, connectionRuleNamesFieldName, 0)
-	sourcePodLabels := utils.ReadNestedMapStringFromTF(d, sourcePodLabelFieldName, connectionRuleNamesLabelsFieldName, 0)
+	sourcePodNames := utils2.ReadNestedListStringFromTF(d, sourcePodNameFieldName, connectionRuleNamesFieldName, 0)
+	sourcePodLabels := utils2.ReadNestedMapStringFromTF(d, sourcePodLabelFieldName, connectionRuleNamesLabelsFieldName, 0)
 	sourcePodAny := isPodAny(d, sourcePodAnyFieldName)
 
 	if len(sourceIps) != 0 {
-		source := &model.IPRangeConnectionRulePart{
+		source := &model2.IPRangeConnectionRulePart{
 			Networks: sourceIps,
 		}
 		return source, nil
 	} else if sourceExternal {
-		source := &model.ExternalConnectionRulePart{}
+		source := &model2.ExternalConnectionRulePart{}
 
 		return source, nil
 	} else if len(sourcePodNames) != 0 {
-		vulString := utils.ReadNestedStringFromTF(d, sourcePodNameFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
-		source := &model.PodNameConnectionRulePart{
+		vulString := utils2.ReadNestedStringFromTF(d, sourcePodNameFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
+		source := &model2.PodNameConnectionRulePart{
 			Environments:               nil,
 			Names:                      sourcePodNames,
 			VulnerabilitySeverityLevel: strings.ToUpper(vulString),
@@ -521,10 +520,10 @@ func getSource(d *schema.ResourceData) (interface{}, error) {
 		return source, nil
 
 	} else if len(sourcePodLabels) != 0 {
-		vulString := utils.ReadNestedStringFromTF(d, sourcePodLabelFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
-		labels := utils.GetLabelsFromMap(sourcePodLabels)
+		vulString := utils2.ReadNestedStringFromTF(d, sourcePodLabelFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
+		labels := utils2.GetLabelsFromMap(sourcePodLabels)
 
-		source := &model.PodLablesConnectionRulePart{
+		source := &model2.PodLablesConnectionRulePart{
 			Environments:               nil,
 			Labels:                     labels,
 			VulnerabilitySeverityLevel: strings.ToUpper(vulString),
@@ -533,8 +532,8 @@ func getSource(d *schema.ResourceData) (interface{}, error) {
 		return source, nil
 
 	} else if sourcePodAny {
-		vulString := utils.ReadNestedStringFromTF(d, sourcePodAnyFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
-		source := &model.PodAnyConnectionRulePart{
+		vulString := utils2.ReadNestedStringFromTF(d, sourcePodAnyFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
+		source := &model2.PodAnyConnectionRulePart{
 			Environments:               nil,
 			VulnerabilitySeverityLevel: strings.ToUpper(vulString),
 		}
@@ -546,30 +545,30 @@ func getSource(d *schema.ResourceData) (interface{}, error) {
 }
 
 func getDestination(d *schema.ResourceData) (interface{}, error) {
-	destinationIps := utils.ReadNestedListStringFromTF(d, destinationAddressIpRangeFieldName, ipsFieldName, 0)
-	destinationDomains := utils.ReadNestedListStringFromTF(d, destinationAddressDomainFieldName, domainsFieldName, 0)
+	destinationIps := utils2.ReadNestedListStringFromTF(d, destinationAddressIpRangeFieldName, ipsFieldName, 0)
+	destinationDomains := utils2.ReadNestedListStringFromTF(d, destinationAddressDomainFieldName, domainsFieldName, 0)
 	destinationExternal := d.Get(destinationExternalFieldName).(bool)
-	destinationPodNames := utils.ReadNestedListStringFromTF(d, destinationPodNameFieldName, connectionRuleNamesFieldName, 0)
-	destinationPodLabels := utils.ReadNestedMapStringFromTF(d, destinationPodLabelFieldName, connectionRuleNamesLabelsFieldName, 0)
+	destinationPodNames := utils2.ReadNestedListStringFromTF(d, destinationPodNameFieldName, connectionRuleNamesFieldName, 0)
+	destinationPodLabels := utils2.ReadNestedMapStringFromTF(d, destinationPodLabelFieldName, connectionRuleNamesLabelsFieldName, 0)
 	destinationPodAny := isPodAny(d, destinationPodAnyFieldName)
 
 	if len(destinationIps) != 0 {
-		destination := &model.IPRangeConnectionRulePart{
+		destination := &model2.IPRangeConnectionRulePart{
 			Networks: destinationIps,
 		}
 		return destination, nil
 	} else if len(destinationDomains) != 0 {
-		destination := &model.FqdnConnectionRulePart{
+		destination := &model2.FqdnConnectionRulePart{
 			FqdnAddresses: destinationDomains,
 		}
 		return destination, nil
 	} else if destinationExternal {
-		destination := &model.ExternalConnectionRulePart{}
+		destination := &model2.ExternalConnectionRulePart{}
 
 		return destination, nil
 	} else if len(destinationPodNames) != 0 {
-		vulString := utils.ReadNestedStringFromTF(d, destinationPodNameFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
-		destination := &model.PodNameConnectionRulePart{
+		vulString := utils2.ReadNestedStringFromTF(d, destinationPodNameFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
+		destination := &model2.PodNameConnectionRulePart{
 			Environments:               nil,
 			Names:                      destinationPodNames,
 			VulnerabilitySeverityLevel: strings.ToUpper(vulString),
@@ -578,9 +577,9 @@ func getDestination(d *schema.ResourceData) (interface{}, error) {
 		return destination, nil
 
 	} else if len(destinationPodLabels) != 0 {
-		vulString := utils.ReadNestedStringFromTF(d, destinationPodLabelFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
-		labels := utils.GetLabelsFromMap(destinationPodLabels)
-		destination := &model.PodLablesConnectionRulePart{
+		vulString := utils2.ReadNestedStringFromTF(d, destinationPodLabelFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
+		labels := utils2.GetLabelsFromMap(destinationPodLabels)
+		destination := &model2.PodLablesConnectionRulePart{
 			Environments:               nil,
 			Labels:                     labels,
 			VulnerabilitySeverityLevel: strings.ToUpper(vulString),
@@ -589,8 +588,8 @@ func getDestination(d *schema.ResourceData) (interface{}, error) {
 		return destination, nil
 
 	} else if destinationPodAny {
-		vulString := utils.ReadNestedStringFromTF(d, destinationPodAnyFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
-		destination := &model.PodAnyConnectionRulePart{
+		vulString := utils2.ReadNestedStringFromTF(d, destinationPodAnyFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
+		destination := &model2.PodAnyConnectionRulePart{
 			Environments:               nil,
 			VulnerabilitySeverityLevel: strings.ToUpper(vulString),
 		}
@@ -614,7 +613,7 @@ func isPodAny(d *schema.ResourceData, mainField string) bool {
 	return false
 }
 
-func updateConnectionRuleMutableFields(d *schema.ResourceData, currentRuleInSecureCN *model.CdConnectionRule) {
+func updateConnectionRuleMutableFields(d *schema.ResourceData, currentRuleInSecureCN *model2.CdConnectionRule) {
 	log.Print("[DEBUG] updating cd connection rule mutable fields")
 
 	_ = d.Set(connectionRuleNameFieldName, currentRuleInSecureCN.Name)
@@ -625,7 +624,7 @@ func updateConnectionRuleMutableFields(d *schema.ResourceData, currentRuleInSecu
 	mutateDestination(d, currentRuleInSecureCN)
 }
 
-func mutateDestination(d *schema.ResourceData, currentRule *model.CdConnectionRule) {
+func mutateDestination(d *schema.ResourceData, currentRule *model2.CdConnectionRule) {
 	destination := currentRule.Destination()
 	destinationPartType := destination.ConnectionRulePartType()
 	if destinationPartType == "PodNameConnectionRulePart" {
@@ -677,7 +676,7 @@ func mutateDestination(d *schema.ResourceData, currentRule *model.CdConnectionRu
 	}
 }
 
-func mutateSource(d *schema.ResourceData, currentRuleInSecureCN *model.CdConnectionRule) {
+func mutateSource(d *schema.ResourceData, currentRuleInSecureCN *model2.CdConnectionRule) {
 	source := currentRuleInSecureCN.Source()
 	currentSourcePartTypeInSecureCN := source.ConnectionRulePartType()
 	if currentSourcePartTypeInSecureCN == "PodNameConnectionRulePart" {
@@ -696,7 +695,7 @@ func mutateSource(d *schema.ResourceData, currentRuleInSecureCN *model.CdConnect
 		_ = d.Set(sourceExternalFieldName, nil)
 		_ = d.Set(sourcePodAnyFieldName, nil)
 	} else if currentSourcePartTypeInSecureCN == "PodAnyConnectionRulePart" {
-		currentSourceInSecureCN := source.(*model.PodAnyConnectionRulePart)
+		currentSourceInSecureCN := source.(*model2.PodAnyConnectionRulePart)
 		_ = d.Set(sourcePodAnyFieldName, currentSourceInSecureCN)
 		_ = d.Set(sourcePodLabelFieldName, nil)
 		_ = d.Set(sourcePodNameFieldName, nil)
@@ -710,7 +709,7 @@ func mutateSource(d *schema.ResourceData, currentRuleInSecureCN *model.CdConnect
 		_ = d.Set(sourceExternalFieldName, nil)
 		_ = d.Set(sourcePodAnyFieldName, nil)
 	} else if currentSourcePartTypeInSecureCN == "ExternalConnectionRulePart" {
-		currentSourceInSecureCN := source.(*model.ExternalConnectionRulePart)
+		currentSourceInSecureCN := source.(*model2.ExternalConnectionRulePart)
 		_ = d.Set(sourceExternalFieldName, currentSourceInSecureCN)
 		_ = d.Set(sourceIpRangeFieldName, nil)
 		_ = d.Set(sourcePodLabelFieldName, nil)
@@ -719,8 +718,8 @@ func mutateSource(d *schema.ResourceData, currentRuleInSecureCN *model.CdConnect
 	}
 }
 
-func updateByPodNames(d *schema.ResourceData, part model.ConnectionRulePart, mainField string) {
-	currentPartInSecureCN := part.(*model.PodNameConnectionRulePart)
+func updateByPodNames(d *schema.ResourceData, part model2.ConnectionRulePart, mainField string) {
+	currentPartInSecureCN := part.(*model2.PodNameConnectionRulePart)
 	currentPartInTerraform := d.Get(mainField)
 	if currentPartInTerraform == nil || len(currentPartInTerraform.([]interface{})) == 0 {
 		_ = d.Set(mainField, currentPartInSecureCN)
@@ -738,8 +737,8 @@ func updateByPodNames(d *schema.ResourceData, part model.ConnectionRulePart, mai
 	}
 }
 
-func updateByLabels(d *schema.ResourceData, part model.ConnectionRulePart, mainField string) {
-	currentPartInSecureCN := part.(*model.PodLablesConnectionRulePart)
+func updateByLabels(d *schema.ResourceData, part model2.ConnectionRulePart, mainField string) {
+	currentPartInSecureCN := part.(*model2.PodLablesConnectionRulePart)
 	currentPartInTerraform := d.Get(mainField)
 	if currentPartInTerraform == nil || len(currentPartInTerraform.([]interface{})) == 0 {
 		_ = d.Set(mainField, currentPartInSecureCN)
@@ -758,8 +757,8 @@ func updateByLabels(d *schema.ResourceData, part model.ConnectionRulePart, mainF
 	}
 }
 
-func updateByIps(d *schema.ResourceData, part model.ConnectionRulePart, mainField string) {
-	currentPartInSecureCN := part.(*model.IPRangeConnectionRulePart)
+func updateByIps(d *schema.ResourceData, part model2.ConnectionRulePart, mainField string) {
+	currentPartInSecureCN := part.(*model2.IPRangeConnectionRulePart)
 	currentPartInTerraform := d.Get(mainField)
 	if currentPartInTerraform == nil || len(currentPartInTerraform.([]interface{})) == 0 {
 		_ = d.Set(mainField, currentPartInSecureCN)
@@ -773,8 +772,8 @@ func updateByIps(d *schema.ResourceData, part model.ConnectionRulePart, mainFiel
 	}
 }
 
-func updateByDomains(d *schema.ResourceData, part model.ConnectionRulePart, mainField string) {
-	currentPartInSecureCN := part.(*model.FqdnConnectionRulePart)
+func updateByDomains(d *schema.ResourceData, part model2.ConnectionRulePart, mainField string) {
+	currentPartInSecureCN := part.(*model2.FqdnConnectionRulePart)
 	currentPartInTerraform := d.Get(mainField)
 	if currentPartInTerraform == nil || len(currentPartInTerraform.([]interface{})) == 0 {
 		_ = d.Set(mainField, currentPartInSecureCN)
@@ -800,7 +799,7 @@ func updateStringSubField(d *schema.ResourceData, mainField string, subField str
 
 func updateStringSliceSubField(d *schema.ResourceData, mainField string, subField string, terraformPart interface{}, secureCNPart []string) {
 	valuesInTerraform := getDataInTerraformAsStringSlice(terraformPart, subField)
-	if !utils.IsStringSlicesIdentical(valuesInTerraform, secureCNPart) {
+	if !utils2.IsStringSlicesIdentical(valuesInTerraform, secureCNPart) {
 		fieldInTerraform := terraformPart.(map[string]interface{})
 		fieldInTerraform[subField] = secureCNPart
 		newValues := make([]interface{}, 0, len(fieldInTerraform))
@@ -809,7 +808,7 @@ func updateStringSliceSubField(d *schema.ResourceData, mainField string, subFiel
 	}
 }
 
-func updateLabelMapSubField(d *schema.ResourceData, mainField string, subField string, terraformPart interface{}, secureCNPart []*model.Label) {
+func updateLabelMapSubField(d *schema.ResourceData, mainField string, subField string, terraformPart interface{}, secureCNPart []*model2.Label) {
 
 	labelsInTerraform := getDataInTerraformAsLabelsSlice(terraformPart, subField)
 	if !reflect.DeepEqual(labelsInTerraform, secureCNPart) {
@@ -827,12 +826,12 @@ func getDataInTerraformAsStringSlice(inter interface{}, subfield string) []strin
 	return values
 }
 
-func getDataInTerraformAsLabelsSlice(inter interface{}, subfield string) []*model.Label {
+func getDataInTerraformAsLabelsSlice(inter interface{}, subfield string) []*model2.Label {
 	imap := inter.(map[string]interface{})
 	sub := imap[subfield].(map[string]interface{})
-	values := make([]*model.Label, 0, len(sub))
+	values := make([]*model2.Label, 0, len(sub))
 	for k, v := range sub {
-		label := &model.Label{
+		label := &model2.Label{
 			Key:   k,
 			Value: v.(string),
 		}

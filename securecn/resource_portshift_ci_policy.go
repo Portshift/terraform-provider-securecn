@@ -3,16 +3,15 @@ package securecn
 import (
 	"context"
 	"log"
+	"terraform-provider-securecn/internal/client"
+	"terraform-provider-securecn/internal/escher_api/escherClient"
+	model2 "terraform-provider-securecn/internal/escher_api/model"
+	utils2 "terraform-provider-securecn/internal/utils"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
-	"terraform-provider-securecn/client"
-	"terraform-provider-securecn/escher_api/escherClient"
-	"terraform-provider-securecn/escher_api/model"
-	"terraform-provider-securecn/utils"
 )
 
 func ResourceCiPolicy() *schema.Resource {
@@ -82,14 +81,14 @@ func resourceCiPolicyCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	ciPolicy, err := getCiPolicyFromConfig(d, serviceApi)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	params := model.PostCiPolicyParams{
+	params := model2.PostCiPolicyParams{
 		Body:    ciPolicy,
 		Context: ctx,
 	}
@@ -109,9 +108,9 @@ func resourceCiPolicyRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
-	params := model.GetCiPolicyParams{
+	params := model2.GetCiPolicyParams{
 		Context: ctx,
 	}
 
@@ -130,7 +129,7 @@ func resourceCiPolicyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	return nil
 }
 
-func updateCiPolicyMutableFields(d *schema.ResourceData, policy *model.CiPolicy) error {
+func updateCiPolicyMutableFields(d *schema.ResourceData, policy *model2.CiPolicy) error {
 	return nil
 }
 
@@ -144,14 +143,14 @@ func resourceCiPolicyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	ciPolicy, err := getCiPolicyFromConfig(d, serviceApi)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	params := model.PutCiPolicyPolicyIDParams{
+	params := model2.PutCiPolicyPolicyIDParams{
 		PolicyID: strfmt.UUID(d.Id()),
 		Body:     ciPolicy,
 		Context:  ctx,
@@ -172,9 +171,9 @@ func resourceCiPolicyDelete(ctx context.Context, d *schema.ResourceData, m inter
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
-	params := model.DeleteCiPolicyPolicyIDParams{
+	params := model2.DeleteCiPolicyPolicyIDParams{
 		PolicyID: strfmt.UUID(d.Id()),
 		Context:  ctx,
 	}
@@ -196,34 +195,34 @@ func validateCiPolicyConfig(d *schema.ResourceData) error {
 	return nil
 }
 
-func getCiPolicyFromConfig(d *schema.ResourceData, api *escherClient.MgmtServiceApiCtx) (*model.CiPolicy, error) {
+func getCiPolicyFromConfig(d *schema.ResourceData, api *escherClient.MgmtServiceApiCtx) (*model2.CiPolicy, error) {
 	log.Print("[DEBUG] getting ci policy from config")
 
 	name := d.Get(nameFieldName).(string)
 	description := d.Get(descriptionFieldName).(string)
 
-	ciPolicy := &model.CiPolicy{
+	ciPolicy := &model2.CiPolicy{
 		Name:        &name,
 		Description: description,
 	}
 
-	permissibleVulnerabilityLevel := utils.ReadNestedStringFromTF(d, "vulnerability_policy", "permissible_vulnerability_level", 0)
-	enforcementOption := utils.ReadNestedStringFromTF(d, "vulnerability_policy", "enforcement_option", 0)
+	permissibleVulnerabilityLevel := utils2.ReadNestedStringFromTF(d, "vulnerability_policy", "permissible_vulnerability_level", 0)
+	enforcementOption := utils2.ReadNestedStringFromTF(d, "vulnerability_policy", "enforcement_option", 0)
 
 	if permissibleVulnerabilityLevel != "" && enforcementOption != "" {
-		ciPolicy.VulnerabilityCiPolicy = &model.CiVulnerabilityPolicy{
-			PermissibleVulnerabilityLevel: model.VulnerabilitySeverity(permissibleVulnerabilityLevel),
-			EnforcementOption:             model.EnforcementOption(enforcementOption),
+		ciPolicy.VulnerabilityCiPolicy = &model2.CiVulnerabilityPolicy{
+			PermissibleVulnerabilityLevel: model2.VulnerabilitySeverity(permissibleVulnerabilityLevel),
+			EnforcementOption:             model2.EnforcementOption(enforcementOption),
 		}
 	}
 
-	permissibleVulnerabilityLevel = utils.ReadNestedStringFromTF(d, "dockerfile_scan_policy", "permissible_dockerfile_scan_severity", 0)
-	enforcementOption = utils.ReadNestedStringFromTF(d, "dockerfile_scan_policy", "enforcement_option", 0)
+	permissibleVulnerabilityLevel = utils2.ReadNestedStringFromTF(d, "dockerfile_scan_policy", "permissible_dockerfile_scan_severity", 0)
+	enforcementOption = utils2.ReadNestedStringFromTF(d, "dockerfile_scan_policy", "enforcement_option", 0)
 
 	if permissibleVulnerabilityLevel != "" && enforcementOption != "" {
-		ciPolicy.DockerfileScanCiPolicy = &model.CiDockerfileScanPolicy{
-			PermissibleDockerfileScanSeverity: model.DockerfileScanSeverity(permissibleVulnerabilityLevel),
-			EnforcementOption:                 model.EnforcementOption(enforcementOption),
+		ciPolicy.DockerfileScanCiPolicy = &model2.CiDockerfileScanPolicy{
+			PermissibleDockerfileScanSeverity: model2.DockerfileScanSeverity(permissibleVulnerabilityLevel),
+			EnforcementOption:                 model2.EnforcementOption(enforcementOption),
 		}
 	}
 

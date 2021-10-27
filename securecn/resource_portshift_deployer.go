@@ -4,16 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"terraform-provider-securecn/internal/client"
+	"terraform-provider-securecn/internal/escher_api/escherClient"
+	model2 "terraform-provider-securecn/internal/escher_api/model"
+	utils2 "terraform-provider-securecn/internal/utils"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
-	"terraform-provider-securecn/client"
-	"terraform-provider-securecn/escher_api/escherClient"
-	"terraform-provider-securecn/escher_api/model"
-	"terraform-provider-securecn/utils"
 )
 
 func ResourceDeployer() *schema.Resource {
@@ -84,7 +83,7 @@ func resourceDeployerCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	deployerFromConfig, err := getDeployerFromConfig(ctx, d, serviceApi)
 	if err != nil {
@@ -106,7 +105,7 @@ func resourceDeployerRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	deployerId := d.Id()
 
 	deployer, err := serviceApi.GetDeployerById(ctx, strfmt.UUID(deployerId))
@@ -124,7 +123,7 @@ func resourceDeployerRead(ctx context.Context, d *schema.ResourceData, m interfa
 	return nil
 }
 
-func updateDeployerMutableFields(d *schema.ResourceData, deployer model.Deployer) error {
+func updateDeployerMutableFields(d *schema.ResourceData, deployer model2.Deployer) error {
 	return nil
 }
 
@@ -138,7 +137,7 @@ func resourceDeployerUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	deployer, err := getDeployerFromConfig(ctx, d, serviceApi)
 	if err != nil {
@@ -162,7 +161,7 @@ func resourceDeployerDelete(ctx context.Context, d *schema.ResourceData, m inter
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	_, err := serviceApi.DeleteDeployer(ctx, strfmt.UUID(d.Id()))
 	if err != nil {
 		return diag.FromErr(err)
@@ -184,22 +183,22 @@ func validateDeployerConfig(d *schema.ResourceData) error {
 	return nil
 }
 
-func getDeployerFromConfig(ctx context.Context, d *schema.ResourceData, api *escherClient.MgmtServiceApiCtx) (model.Deployer, error) {
+func getDeployerFromConfig(ctx context.Context, d *schema.ResourceData, api *escherClient.MgmtServiceApiCtx) (model2.Deployer, error) {
 	log.Print("[DEBUG] getting deployer from config")
 
 	name := d.Get(nameFieldName).(string)
-	clusterId := utils.ReadNestedStringFromTF(d, "operator_deployer", "cluster_id", 0)
-	namespaceName := utils.ReadNestedStringFromTF(d, "operator_deployer", "namespace", 0)
-	securityCheck := utils.ReadNestedBoolFromTF(d, "operator_deployer", "security_check", 0)
-	ruleCreation := utils.ReadNestedBoolFromTF(d, "operator_deployer", "rule_creation", 0)
-	serviceAccountName := utils.ReadNestedStringFromTF(d, "operator_deployer", "service_account", 0)
+	clusterId := utils2.ReadNestedStringFromTF(d, "operator_deployer", "cluster_id", 0)
+	namespaceName := utils2.ReadNestedStringFromTF(d, "operator_deployer", "namespace", 0)
+	securityCheck := utils2.ReadNestedBoolFromTF(d, "operator_deployer", "security_check", 0)
+	ruleCreation := utils2.ReadNestedBoolFromTF(d, "operator_deployer", "rule_creation", 0)
+	serviceAccountName := utils2.ReadNestedStringFromTF(d, "operator_deployer", "service_account", 0)
 
 	serviceAccounts, err := api.GetDeployersServiceAccountsByNamespace(ctx, strfmt.UUID(clusterId), namespaceName)
 	if err != nil {
 		return nil, err
 	}
 
-	var serviceAccount *model.ServiceAccountInfo
+	var serviceAccount *model2.ServiceAccountInfo
 	for _, sai := range serviceAccounts.Payload {
 		if sai.Name == serviceAccountName {
 			serviceAccount = sai
@@ -214,7 +213,7 @@ func getDeployerFromConfig(ctx context.Context, d *schema.ResourceData, api *esc
 		return nil, err
 	}
 
-	var namespace *model.KubernetesNamespaceResponse
+	var namespace *model2.KubernetesNamespaceResponse
 	for _, ns := range namespaces.Payload {
 		if ns.Name == namespaceName {
 			namespace = ns
@@ -224,7 +223,7 @@ func getDeployerFromConfig(ctx context.Context, d *schema.ResourceData, api *esc
 		return nil, fmt.Errorf("failed to find %s namespace on cluster", namespaceName)
 	}
 
-	deployer := &model.OperatorDeployer{
+	deployer := &model2.OperatorDeployer{
 		ClusterID:     strfmt.UUID(clusterId),
 		SecurityCheck: &securityCheck,
 		RuleCreation:  &ruleCreation,

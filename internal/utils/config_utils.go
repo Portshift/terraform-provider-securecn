@@ -2,8 +2,7 @@ package utils
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"terraform-provider-securecn/escher_api/model"
+	"terraform-provider-securecn/internal/escher_api/model"
 )
 
 func ReadNestedListStringFromTF(d *schema.ResourceData, mainField string, subField string, index int) []string {

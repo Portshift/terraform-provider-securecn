@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"terraform-provider-securecn/internal/client"
+	"terraform-provider-securecn/internal/escher_api/escherClient"
+	model2 "terraform-provider-securecn/internal/escher_api/model"
+	utils2 "terraform-provider-securecn/internal/utils"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"terraform-provider-securecn/client"
-	"terraform-provider-securecn/escher_api/escherClient"
-	"terraform-provider-securecn/escher_api/model"
-	"terraform-provider-securecn/utils"
 )
 
 const nameFieldName = "name"
@@ -85,7 +84,7 @@ func resourceEnvironmentCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	environmentFromConfig, err := getEnvironmentFromConfig(ctx, d, serviceApi, httpClientWrapper)
 	if err != nil {
@@ -109,7 +108,7 @@ func resourceEnvironmentRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	envId := d.Id()
 
 	currentEnvInSecureCN, err := serviceApi.GetEnvironment(ctx, httpClientWrapper.HttpClient, strfmt.UUID(envId))
@@ -138,7 +137,7 @@ func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 
 	environment, err := getEnvironmentFromConfig(ctx, d, serviceApi, httpClientWrapper)
 	if err != nil {
@@ -161,7 +160,7 @@ func resourceEnvironmentDelete(ctx context.Context, d *schema.ResourceData, m in
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
 
-	serviceApi := utils.GetServiceApi(&httpClientWrapper)
+	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	envId := strfmt.UUID(d.Id())
 	err := serviceApi.DeleteEnvironment(ctx, httpClientWrapper.HttpClient, envId)
 	if err != nil {
@@ -178,8 +177,8 @@ func validateEnvironmentConfig(d *schema.ResourceData) error {
 	log.Printf("[DEBUG] validating config")
 	allKubernetesEnvironments := d.Get(kubernetesEnvironmentFieldName).([]interface{})
 	for index, _ := range allKubernetesEnvironments {
-		namespaceNames := utils.ReadNestedListStringFromTF(d, kubernetesEnvironmentFieldName, namespacesNamesFieldName, index)
-		namespaceLabels := utils.GetLabelsFromMap(utils.ReadNestedMapStringFromTF(d, kubernetesEnvironmentFieldName, namespacesLabelsFieldName, index))
+		namespaceNames := utils2.ReadNestedListStringFromTF(d, kubernetesEnvironmentFieldName, namespacesNamesFieldName, index)
+		namespaceLabels := utils2.GetLabelsFromMap(utils2.ReadNestedMapStringFromTF(d, kubernetesEnvironmentFieldName, namespacesLabelsFieldName, index))
 
 		if namespaceNames != nil && namespaceLabels != nil {
 			return fmt.Errorf("kubernetes_environment.%d.namespaces_by_names\": one of `kubernetes_environment.%d.namespaces_by_names,kubernetes_environment.[%d].namespaces_by_labels` must be specified", index, index, index)
@@ -188,21 +187,21 @@ func validateEnvironmentConfig(d *schema.ResourceData) error {
 	return nil
 }
 
-func getEnvironmentFromConfig(ctx context.Context, d *schema.ResourceData, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) (*model.Environment, error) {
+func getEnvironmentFromConfig(ctx context.Context, d *schema.ResourceData, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) (*model2.Environment, error) {
 	log.Print("[DEBUG] getting environment from config")
 
 	name := d.Get(nameFieldName).(string)
 	desc := d.Get(descriptionFieldName).(string)
 
-	kubernetesEnvs := make([]*model.KubernetesEnvironment, 0)
+	kubernetesEnvs := make([]*model2.KubernetesEnvironment, 0)
 
 	allKubernetesEnvironments := d.Get(kubernetesEnvironmentFieldName).([]interface{})
 	for index, _ := range allKubernetesEnvironments {
-		clusterName := utils.ReadNestedStringFromTF(d, kubernetesEnvironmentFieldName, clusterNameFieldName, index)
+		clusterName := utils2.ReadNestedStringFromTF(d, kubernetesEnvironmentFieldName, clusterNameFieldName, index)
 		log.Printf("[DEBUG] %v clusterName: %v", index, clusterName)
-		namespaceNames := utils.ReadNestedListStringFromTF(d, kubernetesEnvironmentFieldName, namespacesNamesFieldName, index)
+		namespaceNames := utils2.ReadNestedListStringFromTF(d, kubernetesEnvironmentFieldName, namespacesNamesFieldName, index)
 		log.Printf("[DEBUG] %v namespaceNames: %v", index, namespaceNames)
-		namespaceLabels := utils.GetLabelsFromMap(utils.ReadNestedMapStringFromTF(d, kubernetesEnvironmentFieldName, namespacesLabelsFieldName, index))
+		namespaceLabels := utils2.GetLabelsFromMap(utils2.ReadNestedMapStringFromTF(d, kubernetesEnvironmentFieldName, namespacesLabelsFieldName, index))
 		log.Printf("[DEBUG] %v namespaceLabels: %v", index, namespaceLabels)
 
 		clusterId, err := serviceApi.GetKubernetesClusterIdByName(ctx, httpClientWrapper.HttpClient, clusterName)
@@ -215,7 +214,7 @@ func getEnvironmentFromConfig(ctx context.Context, d *schema.ResourceData, servi
 		kubernetesEnvs = append(kubernetesEnvs, kubeEnv)
 	}
 
-	env := &model.Environment{
+	env := &model2.Environment{
 		ID:                     "",
 		Description:            desc,
 		KubernetesEnvironments: kubernetesEnvs,
@@ -225,9 +224,9 @@ func getEnvironmentFromConfig(ctx context.Context, d *schema.ResourceData, servi
 	return env, nil
 }
 
-func createKubernetesEnvFromConfig(namespaceNames []string, namespaceLabels []*model.Label, clusterID *strfmt.UUID) *model.KubernetesEnvironment {
+func createKubernetesEnvFromConfig(namespaceNames []string, namespaceLabels []*model2.Label, clusterID *strfmt.UUID) *model2.KubernetesEnvironment {
 
-	return &model.KubernetesEnvironment{
+	return &model2.KubernetesEnvironment{
 		ID:                "",
 		KubernetesCluster: clusterID,
 		NamespaceLabels:   namespaceLabels,
@@ -236,7 +235,7 @@ func createKubernetesEnvFromConfig(namespaceNames []string, namespaceLabels []*m
 
 }
 
-func updateEnvironmentMutableFields(d *schema.ResourceData, currentEnvInSecureCN *model.Environment) error {
+func updateEnvironmentMutableFields(d *schema.ResourceData, currentEnvInSecureCN *model2.Environment) error {
 	log.Print("[DEBUG] updating environment mutable fields")
 
 	err := d.Set(nameFieldName, currentEnvInSecureCN.Name)
@@ -253,7 +252,7 @@ func updateEnvironmentMutableFields(d *schema.ResourceData, currentEnvInSecureCN
 	return err
 }
 
-func mutateKubernetesEnvs(d *schema.ResourceData, currentEnvInSecureCN *model.Environment) error {
+func mutateKubernetesEnvs(d *schema.ResourceData, currentEnvInSecureCN *model2.Environment) error {
 
 	envsInSecureCN := currentEnvInSecureCN.KubernetesEnvironments
 

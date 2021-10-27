@@ -7,8 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"log"
 	"os"
-
-	"terraform-provider-securecn/client"
+	"terraform-provider-securecn/internal/client"
 )
 
 const ClusterResourceName = "securecn_k8s_cluster"

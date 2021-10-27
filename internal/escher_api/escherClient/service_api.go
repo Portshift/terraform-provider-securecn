@@ -9,8 +9,8 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"terraform-provider-securecn/escher_api/auth"
-	"terraform-provider-securecn/escher_api/model"
+	auth2 "terraform-provider-securecn/internal/escher_api/auth"
+	model2 "terraform-provider-securecn/internal/escher_api/model"
 )
 
 const (
@@ -67,7 +67,7 @@ func (cfg *TransportConfig) WithSchemes(schemes []string) *TransportConfig {
 type MgmtServiceApiCtx struct {
 	auth      runtime.ClientAuthInfoWriter
 	accessKey string
-	runtime   *auth.Runtime
+	runtime   *auth2.Runtime
 }
 
 func CreateServiceApi(url, accessKey, secretKey string, client *http.Client) (*MgmtServiceApiCtx, error) {
@@ -85,7 +85,7 @@ func CreateServiceApi(url, accessKey, secretKey string, client *http.Client) (*M
 
 func createMgmtServiceApiCtx(mgmtHost string, httpClient *http.Client) *MgmtServiceApiCtx {
 	cfg := DefaultTransportConfig().WithHost(mgmtHost)
-	transport := auth.NewWithClient(cfg.Host, cfg.BasePath, cfg.Schemes, httpClient)
+	transport := auth2.NewWithClient(cfg.Host, cfg.BasePath, cfg.Schemes, httpClient)
 
 	return &MgmtServiceApiCtx{
 		runtime: transport,
@@ -93,7 +93,7 @@ func createMgmtServiceApiCtx(mgmtHost string, httpClient *http.Client) *MgmtServ
 }
 
 func (serviceMgmtApi *MgmtServiceApiCtx) DownloadKubernetesSecureCNBundle(ctx context.Context, client *http.Client, writer io.Writer, clusterUUID strfmt.UUID) error {
-	params := &model.DownloadBundleParams{
+	params := &model2.DownloadBundleParams{
 		KubernetesClusterID: clusterUUID,
 		Timeout:             0,
 		Context:             ctx,
@@ -108,10 +108,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DownloadKubernetesSecureCNBundle(ctx co
 	return nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) CreateKubernetesCluster(ctx context.Context, client *http.Client, cluster *model.KubernetesCluster) (*model.PostKubernetesClustersCreated, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) CreateKubernetesCluster(ctx context.Context, client *http.Client, cluster *model2.KubernetesCluster) (*model2.PostKubernetesClustersCreated, error) {
 	log.Print("[DEBUG] creating cluster")
 
-	params := &model.PostKubernetesClustersParams{
+	params := &model2.PostKubernetesClustersParams{
 		Cluster:    cluster,
 		Timeout:    0,
 		Context:    ctx,
@@ -127,10 +127,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) CreateKubernetesCluster(ctx context.Con
 	return newCluster, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) CreateConnectionRule(ctx context.Context, client *http.Client, rule *model.CdConnectionRule) (*model.PostCdConnectionsRuleCreated, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) CreateConnectionRule(ctx context.Context, client *http.Client, rule *model2.CdConnectionRule) (*model2.PostCdConnectionsRuleCreated, error) {
 	log.Print("[DEBUG] creating cd connections rule")
 
-	params := &model.PostCdConnectionsRuleParams{
+	params := &model2.PostCdConnectionsRuleParams{
 		Body:       rule,
 		Context:    ctx,
 		HTTPClient: client,
@@ -145,10 +145,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) CreateConnectionRule(ctx context.Contex
 	return newRule, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) CreateEnvironment(ctx context.Context, client *http.Client, env *model.Environment) (*model.PostEnvironmentsCreated, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) CreateEnvironment(ctx context.Context, client *http.Client, env *model2.Environment) (*model2.PostEnvironmentsCreated, error) {
 	log.Print("[DEBUG] creating environment")
 
-	params := &model.PostEnvironmentsParams{
+	params := &model2.PostEnvironmentsParams{
 		Body:       env,
 		Context:    ctx,
 		HTTPClient: client,
@@ -164,10 +164,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) CreateEnvironment(ctx context.Context, 
 	return newEnv, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) CreateDeploymentRule(ctx context.Context, client *http.Client, rule *model.CdAppRule) (*model.PostCdDeploymentRuleCreated, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) CreateDeploymentRule(ctx context.Context, client *http.Client, rule *model2.CdAppRule) (*model2.PostCdDeploymentRuleCreated, error) {
 	log.Print("[DEBUG] deployment rule")
 
-	params := &model.PostCdDeploymentRuleParams{
+	params := &model2.PostCdDeploymentRuleParams{
 		Body:       rule,
 		Context:    ctx,
 		HTTPClient: client,
@@ -183,10 +183,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) CreateDeploymentRule(ctx context.Contex
 	return newRule, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) GetKubernetesClusterById(ctx context.Context, client *http.Client, clusterId strfmt.UUID) (*model.GetKubernetesClustersKubernetesClusterIDOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) GetKubernetesClusterById(ctx context.Context, client *http.Client, clusterId strfmt.UUID) (*model2.GetKubernetesClustersKubernetesClusterIDOK, error) {
 	log.Print("[DEBUG] getting cluster")
 
-	params := &model.GetKubernetesClustersKubernetesClusterIDParams{
+	params := &model2.GetKubernetesClustersKubernetesClusterIDParams{
 		KubernetesClusterID: clusterId,
 		Context:             ctx,
 		HTTPClient:          client,
@@ -200,10 +200,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetKubernetesClusterById(ctx context.Co
 	return cluster, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) GetKubernetesClusterIdByName(ctx context.Context, client *http.Client, kubernetesClusterName string) (*model.GetKubernetesClustersKubernetesClusterNameOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) GetKubernetesClusterIdByName(ctx context.Context, client *http.Client, kubernetesClusterName string) (*model2.GetKubernetesClustersKubernetesClusterNameOK, error) {
 	log.Print("[DEBUG] getting cluster")
 
-	params := &model.GetKubernetesClustersKubernetesClusterNameParams{
+	params := &model2.GetKubernetesClustersKubernetesClusterNameParams{
 		KubernetesClusterName: kubernetesClusterName,
 		Context:               ctx,
 		HTTPClient:            client,
@@ -220,10 +220,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetKubernetesClusterIdByName(ctx contex
 /*
 GetKubernetesClustersKubernetesClusterIDNamespaces lists namespaces on a specific kubernetes cluster
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) GetKubernetesClustersKubernetesClusterIDNamespaces(ctx context.Context, clusterId strfmt.UUID) (*model.GetKubernetesClustersKubernetesClusterIDNamespacesOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) GetKubernetesClustersKubernetesClusterIDNamespaces(ctx context.Context, clusterId strfmt.UUID) (*model2.GetKubernetesClustersKubernetesClusterIDNamespacesOK, error) {
 	registry := new(strfmt.Registry)
 
-	params := model.GetKubernetesClustersKubernetesClusterIDNamespacesParams{
+	params := model2.GetKubernetesClustersKubernetesClusterIDNamespacesParams{
 		KubernetesClusterID: clusterId,
 		Context:             ctx,
 	}
@@ -237,26 +237,26 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetKubernetesClustersKubernetesClusterI
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             &params,
-		Reader:             &model.GetKubernetesClustersKubernetesClusterIDNamespacesReader{Formats: *registry},
+		Reader:             &model2.GetKubernetesClustersKubernetesClusterIDNamespacesReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.GetKubernetesClustersKubernetesClusterIDNamespacesOK)
+	success, ok := result.(*model2.GetKubernetesClustersKubernetesClusterIDNamespacesOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
-	unexpectedSuccess := result.(*model.GetKubernetesClustersKubernetesClusterIDNamespacesDefault)
+	unexpectedSuccess := result.(*model2.GetKubernetesClustersKubernetesClusterIDNamespacesDefault)
 	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) GetCdConnectionsRule(ctx context.Context, client *http.Client, ruleId strfmt.UUID) (*model.GetCdRuleIDConnectionsRuleOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) GetCdConnectionsRule(ctx context.Context, client *http.Client, ruleId strfmt.UUID) (*model2.GetCdRuleIDConnectionsRuleOK, error) {
 	log.Print("[DEBUG] getting cd connection rule")
 
-	params := &model.GetCdRuleIDConnectionsRuleParams{
+	params := &model2.GetCdRuleIDConnectionsRuleParams{
 		RuleID:     ruleId,
 		Context:    ctx,
 		HTTPClient: client,
@@ -270,10 +270,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetCdConnectionsRule(ctx context.Contex
 	return rule, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) GetEnvironment(ctx context.Context, client *http.Client, envId strfmt.UUID) (*model.GetEnvironmentsEnvIDOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) GetEnvironment(ctx context.Context, client *http.Client, envId strfmt.UUID) (*model2.GetEnvironmentsEnvIDOK, error) {
 	log.Print("[DEBUG] getting environment")
 
-	params := &model.GetEnvironmentsEnvIDParams{
+	params := &model2.GetEnvironmentsEnvIDParams{
 		EnvID:      envId,
 		Context:    ctx,
 		HTTPClient: client,
@@ -287,10 +287,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetEnvironment(ctx context.Context, cli
 	return env, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) GetDeploymentRule(ctx context.Context, client *http.Client, ruleId strfmt.UUID) (*model.GetCdRuleIDDeploymentRuleOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) GetDeploymentRule(ctx context.Context, client *http.Client, ruleId strfmt.UUID) (*model2.GetCdRuleIDDeploymentRuleOK, error) {
 	log.Print("[DEBUG] getting deployment rule")
 
-	params := &model.GetCdRuleIDDeploymentRuleParams{
+	params := &model2.GetCdRuleIDDeploymentRuleParams{
 		RuleID:     ruleId,
 		Context:    ctx,
 		HTTPClient: client,
@@ -304,10 +304,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetDeploymentRule(ctx context.Context, 
 	return rule, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) UpdateKubernetesCluster(ctx context.Context, client *http.Client, cluster *model.KubernetesCluster, clusterId strfmt.UUID) (*model.PutKubernetesClustersKubernetesClusterIDOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) UpdateKubernetesCluster(ctx context.Context, client *http.Client, cluster *model2.KubernetesCluster, clusterId strfmt.UUID) (*model2.PutKubernetesClustersKubernetesClusterIDOK, error) {
 	log.Print("[DEBUG] updating cluster")
 
-	params := &model.PutKubernetesClustersKubernetesClusterIDParamsWriter{
+	params := &model2.PutKubernetesClustersKubernetesClusterIDParamsWriter{
 		Body:                cluster,
 		KubernetesClusterID: clusterId,
 		Context:             ctx,
@@ -323,10 +323,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) UpdateKubernetesCluster(ctx context.Con
 	return updatedCluster, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) UpdateCdConnectionsRule(ctx context.Context, client *http.Client, rule *model.CdConnectionRule, ruleId strfmt.UUID) (*model.PutCdRuleIDConnectionsRuleOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) UpdateCdConnectionsRule(ctx context.Context, client *http.Client, rule *model2.CdConnectionRule, ruleId strfmt.UUID) (*model2.PutCdRuleIDConnectionsRuleOK, error) {
 	log.Print("[DEBUG] updating cd connections rule")
 
-	params := &model.PutCdRuleIDConnectionsRuleParams{
+	params := &model2.PutCdRuleIDConnectionsRuleParams{
 		Body:       rule,
 		RuleID:     ruleId,
 		Context:    ctx,
@@ -342,10 +342,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) UpdateCdConnectionsRule(ctx context.Con
 	return updatedRule, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) UpdateEnvironment(ctx context.Context, client *http.Client, env *model.Environment, envId strfmt.UUID) (*model.PutEnvironmentsEnvIDOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) UpdateEnvironment(ctx context.Context, client *http.Client, env *model2.Environment, envId strfmt.UUID) (*model2.PutEnvironmentsEnvIDOK, error) {
 	log.Print("[DEBUG] updating environment")
 
-	params := &model.PutEnvironmentsEnvIDParams{
+	params := &model2.PutEnvironmentsEnvIDParams{
 		Body:       env,
 		EnvID:      envId,
 		Context:    ctx,
@@ -361,10 +361,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) UpdateEnvironment(ctx context.Context, 
 	return updatedEnv, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) UpdateDeploymentRule(ctx context.Context, client *http.Client, rule *model.CdAppRule, ruleId strfmt.UUID) (*model.PutCdRuleIDDeploymentRuleOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) UpdateDeploymentRule(ctx context.Context, client *http.Client, rule *model2.CdAppRule, ruleId strfmt.UUID) (*model2.PutCdRuleIDDeploymentRuleOK, error) {
 	log.Print("[DEBUG] updating deployment rule")
 
-	params := &model.PutCdRuleIDDeploymentRuleParams{
+	params := &model2.PutCdRuleIDDeploymentRuleParams{
 		Body:       rule,
 		RuleID:     ruleId,
 		Context:    ctx,
@@ -383,7 +383,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) UpdateDeploymentRule(ctx context.Contex
 func (serviceMgmtApi *MgmtServiceApiCtx) DeleteKubernetesCluster(ctx context.Context, client *http.Client, clusterId strfmt.UUID) error {
 	log.Print("[DEBUG] deleting cluster")
 
-	params := &model.DeleteKubernetesClustersKubernetesClusterIDParams{
+	params := &model2.DeleteKubernetesClustersKubernetesClusterIDParams{
 		KubernetesClusterID: clusterId,
 		Context:             ctx,
 		HTTPClient:          client,
@@ -399,7 +399,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DeleteKubernetesCluster(ctx context.Con
 
 func (serviceMgmtApi *MgmtServiceApiCtx) DeleteCdConnectionsRule(ctx context.Context, client *http.Client, ruleId strfmt.UUID) error {
 	log.Print("[DEBUG] deleting cd connections rule")
-	params := &model.DeleteCdRuleIDConnectionsRuleParams{
+	params := &model2.DeleteCdRuleIDConnectionsRuleParams{
 		RuleID:     ruleId,
 		Context:    ctx,
 		HTTPClient: client,
@@ -416,7 +416,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DeleteCdConnectionsRule(ctx context.Con
 func (serviceMgmtApi *MgmtServiceApiCtx) DeleteEnvironment(ctx context.Context, client *http.Client, envId strfmt.UUID) error {
 	log.Print("[DEBUG] deleting environment")
 
-	params := &model.DeleteEnvironmentsEnvIDParams{
+	params := &model2.DeleteEnvironmentsEnvIDParams{
 		EnvID:      envId,
 		Context:    ctx,
 		HTTPClient: client,
@@ -433,7 +433,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DeleteEnvironment(ctx context.Context, 
 func (serviceMgmtApi *MgmtServiceApiCtx) DeleteDeploymentRule(ctx context.Context, client *http.Client, ruleId strfmt.UUID) error {
 	log.Print("[DEBUG] deleting deployment rule")
 
-	params := &model.DeleteCdRuleIDDeploymentRuleParams{
+	params := &model2.DeleteCdRuleIDDeploymentRuleParams{
 		RuleID:     ruleId,
 		Context:    ctx,
 		HTTPClient: client,
@@ -447,9 +447,9 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DeleteDeploymentRule(ctx context.Contex
 	return nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) GetPspIdByName(ctx context.Context, client *http.Client, podSecurityPolicyProfileName string) (*model.GetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) GetPspIdByName(ctx context.Context, client *http.Client, podSecurityPolicyProfileName string) (*model2.GetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameOK, error) {
 
-	params := &model.GetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameParams{
+	params := &model2.GetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameParams{
 		PodSecurityPolicyProfileName: podSecurityPolicyProfileName,
 		Context:                      ctx,
 		HTTPClient:                   client,
@@ -464,7 +464,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetPspIdByName(ctx context.Context, cli
 	return pspId, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) downloadBundle(params *model.DownloadBundleParams, writer io.Writer, c *http.Client) (*model.GetKubernetesClustersKubernetesClusterIDSecureCNBundleTarGzOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) downloadBundle(params *model2.DownloadBundleParams, writer io.Writer, c *http.Client) (*model2.GetKubernetesClustersKubernetesClusterIDSecureCNBundleTarGzOK, error) {
 	registry := new(strfmt.Registry)
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
 		ID:                 "GetKubernetesClustersKubernetesClusterIDSecureCNBundleTarGz",
@@ -475,23 +475,23 @@ func (serviceMgmtApi *MgmtServiceApiCtx) downloadBundle(params *model.DownloadBu
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             params,
-		Reader:             &model.GetKubernetesClustersKubernetesClusterIDSecureCNBundleTarGzReader{Formats: *registry, Writer: writer},
+		Reader:             &model2.GetKubernetesClustersKubernetesClusterIDSecureCNBundleTarGzReader{Formats: *registry, Writer: writer},
 		Context:            params.Context,
 		Client:             c,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.GetKubernetesClustersKubernetesClusterIDSecureCNBundleTarGzOK)
+	success, ok := result.(*model2.GetKubernetesClustersKubernetesClusterIDSecureCNBundleTarGzOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
-	unexpectedSuccess := result.(*model.GetKubernetesClustersKubernetesClusterIDSecureCNBundleTarGzDefault)
+	unexpectedSuccess := result.(*model2.GetKubernetesClustersKubernetesClusterIDSecureCNBundleTarGzDefault)
 	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) postKubernetesClusters(params *model.PostKubernetesClustersParams, client *http.Client) (*model.PostKubernetesClustersCreated, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) postKubernetesClusters(params *model2.PostKubernetesClustersParams, client *http.Client) (*model2.PostKubernetesClustersCreated, error) {
 	registry := new(strfmt.Registry)
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
 		ID:                 "PostKubernetesClusters",
@@ -501,7 +501,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) postKubernetesClusters(params *model.Po
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.PostKubernetesClustersReader{Formats: *registry},
+		Reader:             &model2.PostKubernetesClustersReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             client,
@@ -510,16 +510,16 @@ func (serviceMgmtApi *MgmtServiceApiCtx) postKubernetesClusters(params *model.Po
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PostKubernetesClustersCreated)
+	success, ok := result.(*model2.PostKubernetesClustersCreated)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
-	unexpectedSuccess := result.(*model.PostKubernetesClustersDefault)
+	unexpectedSuccess := result.(*model2.PostKubernetesClustersDefault)
 	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) getKubernetesClustersKubernetesClusterID(params *model.GetKubernetesClustersKubernetesClusterIDParams) (*model.GetKubernetesClustersKubernetesClusterIDOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) getKubernetesClustersKubernetesClusterID(params *model2.GetKubernetesClustersKubernetesClusterIDParams) (*model2.GetKubernetesClustersKubernetesClusterIDOK, error) {
 	registry := new(strfmt.Registry)
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
 		ID:                 "GetKubernetesClustersKubernetesClusterID",
@@ -529,7 +529,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getKubernetesClustersKubernetesClusterI
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.GetKubernetesClustersKubernetesClusterIDReader{Formats: *registry},
+		Reader:             &model2.GetKubernetesClustersKubernetesClusterIDReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -537,20 +537,20 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getKubernetesClustersKubernetesClusterI
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.GetKubernetesClustersKubernetesClusterIDOK)
+	success, ok := result.(*model2.GetKubernetesClustersKubernetesClusterIDOK)
 	if ok {
 		return success, nil
 	}
 
 	// unexpected success response
-	unexpectedSuccess := result.(*model.GetKubernetesClustersKubernetesClusterIDDefault)
+	unexpectedSuccess := result.(*model2.GetKubernetesClustersKubernetesClusterIDDefault)
 	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
 getKubernetesClustersKubernetesClusterName gets the kubernetes cluster id with the given name
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) getKubernetesClustersKubernetesClusterName(params *model.GetKubernetesClustersKubernetesClusterNameParams) (*model.GetKubernetesClustersKubernetesClusterNameOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) getKubernetesClustersKubernetesClusterName(params *model2.GetKubernetesClustersKubernetesClusterNameParams) (*model2.GetKubernetesClustersKubernetesClusterNameOK, error) {
 	registry := new(strfmt.Registry)
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -561,7 +561,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getKubernetesClustersKubernetesClusterN
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.GetKubernetesClustersKubernetesClusterNameReader{Formats: *registry},
+		Reader:             &model2.GetKubernetesClustersKubernetesClusterNameReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -569,16 +569,16 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getKubernetesClustersKubernetesClusterN
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.GetKubernetesClustersKubernetesClusterNameOK)
+	success, ok := result.(*model2.GetKubernetesClustersKubernetesClusterNameOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
-	unexpectedSuccess := result.(*model.GetKubernetesClustersKubernetesClusterNameDefault)
+	unexpectedSuccess := result.(*model2.GetKubernetesClustersKubernetesClusterNameDefault)
 	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) deleteKubernetesClustersKubernetesClusterID(params *model.DeleteKubernetesClustersKubernetesClusterIDParams) (*model.DeleteKubernetesClustersKubernetesClusterIDNoContent, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) deleteKubernetesClustersKubernetesClusterID(params *model2.DeleteKubernetesClustersKubernetesClusterIDParams) (*model2.DeleteKubernetesClustersKubernetesClusterIDNoContent, error) {
 	registry := new(strfmt.Registry)
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -589,7 +589,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) deleteKubernetesClustersKubernetesClust
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.DeleteKubernetesClustersKubernetesClusterIDReader{Formats: *registry},
+		Reader:             &model2.DeleteKubernetesClustersKubernetesClusterIDReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -597,16 +597,16 @@ func (serviceMgmtApi *MgmtServiceApiCtx) deleteKubernetesClustersKubernetesClust
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.DeleteKubernetesClustersKubernetesClusterIDNoContent)
+	success, ok := result.(*model2.DeleteKubernetesClustersKubernetesClusterIDNoContent)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
-	unexpectedSuccess := result.(*model.DeleteKubernetesClustersKubernetesClusterIDDefault)
+	unexpectedSuccess := result.(*model2.DeleteKubernetesClustersKubernetesClusterIDDefault)
 	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) putKubernetesClustersKubernetesClusterID(params *model.PutKubernetesClustersKubernetesClusterIDParamsWriter) (*model.PutKubernetesClustersKubernetesClusterIDOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) putKubernetesClustersKubernetesClusterID(params *model2.PutKubernetesClustersKubernetesClusterIDParamsWriter) (*model2.PutKubernetesClustersKubernetesClusterIDOK, error) {
 	registry := new(strfmt.Registry)
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
 		ID:                 "PutKubernetesClustersKubernetesClusterID",
@@ -616,7 +616,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) putKubernetesClustersKubernetesClusterI
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.PutKubernetesClustersKubernetesClusterIDReader{Formats: *registry},
+		Reader:             &model2.PutKubernetesClustersKubernetesClusterIDReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -624,22 +624,22 @@ func (serviceMgmtApi *MgmtServiceApiCtx) putKubernetesClustersKubernetesClusterI
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PutKubernetesClustersKubernetesClusterIDOK)
+	success, ok := result.(*model2.PutKubernetesClustersKubernetesClusterIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
-	unexpectedSuccess := result.(*model.PutKubernetesClustersKubernetesClusterIDDefault)
+	unexpectedSuccess := result.(*model2.PutKubernetesClustersKubernetesClusterIDDefault)
 	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
 deleteCdRuleIDConnectionsRule deletes a cd connection rule
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) deleteCdRuleIDConnectionsRule(params *model.DeleteCdRuleIDConnectionsRuleParams) (*model.DeleteCdRuleIDConnectionsRuleNoContent, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) deleteCdRuleIDConnectionsRule(params *model2.DeleteCdRuleIDConnectionsRuleParams) (*model2.DeleteCdRuleIDConnectionsRuleNoContent, error) {
 	registry := new(strfmt.Registry)
 	if params == nil {
-		params = model.NewDeleteCdRuleIDConnectionsRuleParams()
+		params = model2.NewDeleteCdRuleIDConnectionsRuleParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -650,7 +650,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) deleteCdRuleIDConnectionsRule(params *m
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.DeleteCdRuleIDConnectionsRuleReader{Formats: *registry},
+		Reader:             &model2.DeleteCdRuleIDConnectionsRuleReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -658,7 +658,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) deleteCdRuleIDConnectionsRule(params *m
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.DeleteCdRuleIDConnectionsRuleNoContent)
+	success, ok := result.(*model2.DeleteCdRuleIDConnectionsRuleNoContent)
 	if ok {
 		return success, nil
 	}
@@ -670,10 +670,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) deleteCdRuleIDConnectionsRule(params *m
 /*
 getCdRuleIDConnectionsRule gets a cd connection rule
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) getCdRuleIDConnectionsRule(params *model.GetCdRuleIDConnectionsRuleParams) (*model.GetCdRuleIDConnectionsRuleOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) getCdRuleIDConnectionsRule(params *model2.GetCdRuleIDConnectionsRuleParams) (*model2.GetCdRuleIDConnectionsRuleOK, error) {
 	registry := new(strfmt.Registry)
 	if params == nil {
-		params = model.NewGetCdRuleIDConnectionsRuleParams()
+		params = model2.NewGetCdRuleIDConnectionsRuleParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -684,7 +684,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getCdRuleIDConnectionsRule(params *mode
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.GetCdRuleIDConnectionsRuleReader{Formats: *registry},
+		Reader:             &model2.GetCdRuleIDConnectionsRuleReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -692,7 +692,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getCdRuleIDConnectionsRule(params *mode
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.GetCdRuleIDConnectionsRuleOK)
+	success, ok := result.(*model2.GetCdRuleIDConnectionsRuleOK)
 	if ok {
 		return success, nil
 	}
@@ -705,10 +705,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getCdRuleIDConnectionsRule(params *mode
 /*
 postCdConnectionsRule adds cd connection rule
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) postCdConnectionsRule(params *model.PostCdConnectionsRuleParams) (*model.PostCdConnectionsRuleCreated, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) postCdConnectionsRule(params *model2.PostCdConnectionsRuleParams) (*model2.PostCdConnectionsRuleCreated, error) {
 	registry := new(strfmt.Registry)
 	if params == nil {
-		params = model.NewPostCdConnectionsRuleParams()
+		params = model2.NewPostCdConnectionsRuleParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -719,7 +719,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) postCdConnectionsRule(params *model.Pos
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.PostCdConnectionsRuleReader{Formats: *registry},
+		Reader:             &model2.PostCdConnectionsRuleReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -727,7 +727,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) postCdConnectionsRule(params *model.Pos
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PostCdConnectionsRuleCreated)
+	success, ok := result.(*model2.PostCdConnectionsRuleCreated)
 	if ok {
 		return success, nil
 	}
@@ -741,10 +741,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) postCdConnectionsRule(params *model.Pos
 /*
 putCdRuleIDConnectionsRule updates a cd connection rule
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) putCdRuleIDConnectionsRule(params *model.PutCdRuleIDConnectionsRuleParams) (*model.PutCdRuleIDConnectionsRuleOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) putCdRuleIDConnectionsRule(params *model2.PutCdRuleIDConnectionsRuleParams) (*model2.PutCdRuleIDConnectionsRuleOK, error) {
 	registry := new(strfmt.Registry)
 	if params == nil {
-		params = model.NewPutCdRuleIDConnectionsRuleParams()
+		params = model2.NewPutCdRuleIDConnectionsRuleParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -755,7 +755,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) putCdRuleIDConnectionsRule(params *mode
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.PutCdRuleIDConnectionsRuleReader{Formats: *registry},
+		Reader:             &model2.PutCdRuleIDConnectionsRuleReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -763,7 +763,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) putCdRuleIDConnectionsRule(params *mode
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PutCdRuleIDConnectionsRuleOK)
+	success, ok := result.(*model2.PutCdRuleIDConnectionsRuleOK)
 	if ok {
 		return success, nil
 	}
@@ -777,10 +777,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) putCdRuleIDConnectionsRule(params *mode
 /*
 postEnvironments adds a new environment
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) postEnvironments(params *model.PostEnvironmentsParams, client *http.Client) (*model.PostEnvironmentsCreated, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) postEnvironments(params *model2.PostEnvironmentsParams, client *http.Client) (*model2.PostEnvironmentsCreated, error) {
 	registry := new(strfmt.Registry)
 	if params == nil {
-		params = model.NewPostEnvironmentsParams()
+		params = model2.NewPostEnvironmentsParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -791,7 +791,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) postEnvironments(params *model.PostEnvi
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.PostEnvironmentsReader{Formats: *registry},
+		Reader:             &model2.PostEnvironmentsReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             client,
@@ -799,7 +799,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) postEnvironments(params *model.PostEnvi
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PostEnvironmentsCreated)
+	success, ok := result.(*model2.PostEnvironmentsCreated)
 	if ok {
 		return success, nil
 	}
@@ -812,11 +812,11 @@ func (serviceMgmtApi *MgmtServiceApiCtx) postEnvironments(params *model.PostEnvi
 /*
 deleteEnvironmentEnvID deletes a SecureCN environment by ID.
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) deleteEnvironmentEnvID(params *model.DeleteEnvironmentsEnvIDParams) (*model.DeleteEnvironmentEnvIDNoContent, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) deleteEnvironmentEnvID(params *model2.DeleteEnvironmentsEnvIDParams) (*model2.DeleteEnvironmentEnvIDNoContent, error) {
 	registry := new(strfmt.Registry)
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = model.NewDeleteEnvironmentEnvIDParams()
+		params = model2.NewDeleteEnvironmentEnvIDParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -828,29 +828,29 @@ func (serviceMgmtApi *MgmtServiceApiCtx) deleteEnvironmentEnvID(params *model.De
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             params,
-		Reader:             &model.DeleteEnvironmentsEnvIDReader{Formats: *registry},
+		Reader:             &model2.DeleteEnvironmentsEnvIDReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.DeleteEnvironmentEnvIDNoContent)
+	success, ok := result.(*model2.DeleteEnvironmentEnvIDNoContent)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
-	unexpectedSuccess := result.(*model.DeleteEnvironmentEnvIDDefault)
+	unexpectedSuccess := result.(*model2.DeleteEnvironmentEnvIDDefault)
 	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
 }
 
 /*
 getEnvironmentsEnvID gets an environment
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) getEnvironmentsEnvID(params *model.GetEnvironmentsEnvIDParams) (*model.GetEnvironmentsEnvIDOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) getEnvironmentsEnvID(params *model2.GetEnvironmentsEnvIDParams) (*model2.GetEnvironmentsEnvIDOK, error) {
 	registry := new(strfmt.Registry)
 	if params == nil {
-		params = model.NewGetEnvironmentsEnvIDParams()
+		params = model2.NewGetEnvironmentsEnvIDParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -861,7 +861,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getEnvironmentsEnvID(params *model.GetE
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.GetEnvironmentsEnvIDReader{Formats: *registry},
+		Reader:             &model2.GetEnvironmentsEnvIDReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -869,7 +869,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getEnvironmentsEnvID(params *model.GetE
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.GetEnvironmentsEnvIDOK)
+	success, ok := result.(*model2.GetEnvironmentsEnvIDOK)
 	if ok {
 		return success, nil
 	}
@@ -885,10 +885,10 @@ putEnvironmentsEnvID edits an existing SecureCN environment
 Edit an existing SecureCN environment.
 
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) putEnvironmentsEnvID(params *model.PutEnvironmentsEnvIDParams) (*model.PutEnvironmentsEnvIDOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) putEnvironmentsEnvID(params *model2.PutEnvironmentsEnvIDParams) (*model2.PutEnvironmentsEnvIDOK, error) {
 	registry := new(strfmt.Registry)
 	if params == nil {
-		params = model.NewPutEnvironmentsEnvIDParams()
+		params = model2.NewPutEnvironmentsEnvIDParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -899,7 +899,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) putEnvironmentsEnvID(params *model.PutE
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.PutEnvironmentsEnvIDReader{Formats: *registry},
+		Reader:             &model2.PutEnvironmentsEnvIDReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -907,7 +907,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) putEnvironmentsEnvID(params *model.PutE
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PutEnvironmentsEnvIDOK)
+	success, ok := result.(*model2.PutEnvironmentsEnvIDOK)
 	if ok {
 		return success, nil
 	}
@@ -920,11 +920,11 @@ func (serviceMgmtApi *MgmtServiceApiCtx) putEnvironmentsEnvID(params *model.PutE
 /*
 getCdPodSecurityPolicyProfilesPodSecurityPolicyProfileName gets an id of a psp profile by name
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) getCdPodSecurityPolicyProfilesPodSecurityPolicyProfileName(params *model.GetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameParams) (*model.GetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) getCdPodSecurityPolicyProfilesPodSecurityPolicyProfileName(params *model2.GetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameParams) (*model2.GetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameOK, error) {
 	registry := new(strfmt.Registry)
 
 	if params == nil {
-		params = model.NewGetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameParams()
+		params = model2.NewGetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -935,7 +935,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getCdPodSecurityPolicyProfilesPodSecuri
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.GetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameReader{Formats: *registry},
+		Reader:             &model2.GetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -943,7 +943,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getCdPodSecurityPolicyProfilesPodSecuri
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.GetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameOK)
+	success, ok := result.(*model2.GetCdPodSecurityPolicyProfilesPodSecurityPolicyProfileNameOK)
 	if ok {
 		return success, nil
 	}
@@ -956,11 +956,11 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getCdPodSecurityPolicyProfilesPodSecuri
 /*
 postCdDeploymentRule adds cd deployment rule
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) postCdDeploymentRule(params *model.PostCdDeploymentRuleParams) (*model.PostCdDeploymentRuleCreated, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) postCdDeploymentRule(params *model2.PostCdDeploymentRuleParams) (*model2.PostCdDeploymentRuleCreated, error) {
 	registry := new(strfmt.Registry)
 
 	if params == nil {
-		params = model.NewPostCdDeploymentRuleParams()
+		params = model2.NewPostCdDeploymentRuleParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -971,7 +971,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) postCdDeploymentRule(params *model.Post
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.PostCdDeploymentRuleReader{Formats: *registry},
+		Reader:             &model2.PostCdDeploymentRuleReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -979,7 +979,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) postCdDeploymentRule(params *model.Post
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PostCdDeploymentRuleCreated)
+	success, ok := result.(*model2.PostCdDeploymentRuleCreated)
 	if ok {
 		return success, nil
 	}
@@ -992,11 +992,11 @@ func (serviceMgmtApi *MgmtServiceApiCtx) postCdDeploymentRule(params *model.Post
 /*
 getCdRuleIDDeploymentRule gets a cd deployment rule
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) getCdRuleIDDeploymentRule(params *model.GetCdRuleIDDeploymentRuleParams) (*model.GetCdRuleIDDeploymentRuleOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) getCdRuleIDDeploymentRule(params *model2.GetCdRuleIDDeploymentRuleParams) (*model2.GetCdRuleIDDeploymentRuleOK, error) {
 	registry := new(strfmt.Registry)
 
 	if params == nil {
-		params = model.NewGetCdRuleIDDeploymentRuleParams()
+		params = model2.NewGetCdRuleIDDeploymentRuleParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -1007,7 +1007,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getCdRuleIDDeploymentRule(params *model
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.GetCdRuleIDDeploymentRuleReader{Formats: *registry},
+		Reader:             &model2.GetCdRuleIDDeploymentRuleReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -1015,7 +1015,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getCdRuleIDDeploymentRule(params *model
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.GetCdRuleIDDeploymentRuleOK)
+	success, ok := result.(*model2.GetCdRuleIDDeploymentRuleOK)
 	if ok {
 		return success, nil
 	}
@@ -1028,11 +1028,11 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getCdRuleIDDeploymentRule(params *model
 /*
 putCdRuleIDDeploymentRule updates a cd deployment rule
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) putCdRuleIDDeploymentRule(params *model.PutCdRuleIDDeploymentRuleParams) (*model.PutCdRuleIDDeploymentRuleOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) putCdRuleIDDeploymentRule(params *model2.PutCdRuleIDDeploymentRuleParams) (*model2.PutCdRuleIDDeploymentRuleOK, error) {
 	registry := new(strfmt.Registry)
 
 	if params == nil {
-		params = model.NewPutCdRuleIDDeploymentRuleParams()
+		params = model2.NewPutCdRuleIDDeploymentRuleParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -1043,7 +1043,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) putCdRuleIDDeploymentRule(params *model
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.PutCdRuleIDDeploymentRuleReader{Formats: *registry},
+		Reader:             &model2.PutCdRuleIDDeploymentRuleReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -1051,7 +1051,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) putCdRuleIDDeploymentRule(params *model
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PutCdRuleIDDeploymentRuleOK)
+	success, ok := result.(*model2.PutCdRuleIDDeploymentRuleOK)
 	if ok {
 		return success, nil
 	}
@@ -1064,11 +1064,11 @@ func (serviceMgmtApi *MgmtServiceApiCtx) putCdRuleIDDeploymentRule(params *model
 /*
 deleteCdRuleIDDeploymentRule deletes a cd deployment rule
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) deleteCdRuleIDDeploymentRule(params *model.DeleteCdRuleIDDeploymentRuleParams) (*model.DeleteCdRuleIDDeploymentRuleNoContent, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) deleteCdRuleIDDeploymentRule(params *model2.DeleteCdRuleIDDeploymentRuleParams) (*model2.DeleteCdRuleIDDeploymentRuleNoContent, error) {
 	registry := new(strfmt.Registry)
 
 	if params == nil {
-		params = model.NewDeleteCdRuleIDDeploymentRuleParams()
+		params = model2.NewDeleteCdRuleIDDeploymentRuleParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -1079,7 +1079,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) deleteCdRuleIDDeploymentRule(params *mo
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
 		Params:             params,
-		Reader:             &model.DeleteCdRuleIDDeploymentRuleReader{Formats: *registry},
+		Reader:             &model2.DeleteCdRuleIDDeploymentRuleReader{Formats: *registry},
 		AuthInfo:           serviceMgmtApi.auth,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -1087,7 +1087,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) deleteCdRuleIDDeploymentRule(params *mo
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.DeleteCdRuleIDDeploymentRuleNoContent)
+	success, ok := result.(*model2.DeleteCdRuleIDDeploymentRuleNoContent)
 	if ok {
 		return success, nil
 	}
@@ -1099,14 +1099,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) deleteCdRuleIDDeploymentRule(params *mo
 
 func (serviceMgmtApi *MgmtServiceApiCtx) setServiceKeys(accessKey string, secretKey []byte) {
 	secretKeyStr := base64.StdEncoding.EncodeToString(secretKey)
-	serviceMgmtApi.auth = auth.NewAuth(accessKey, secretKeyStr, "global/services/portshift_request")
+	serviceMgmtApi.auth = auth2.NewAuth(accessKey, secretKeyStr, "global/services/portshift_request")
 	serviceMgmtApi.runtime.DefaultAuthentication = serviceMgmtApi.auth
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) GetDeployerById(ctx context.Context, deployerId strfmt.UUID) (model.Deployer, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) GetDeployerById(ctx context.Context, deployerId strfmt.UUID) (model2.Deployer, error) {
 	log.Print("[DEBUG] getting deployer")
 
-	params := model.GetDeployersParams{
+	params := model2.GetDeployersParams{
 		Context: ctx,
 	}
 
@@ -1124,12 +1124,12 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetDeployerById(ctx context.Context, de
 	return nil, nil
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) getDeployers(params *model.GetDeployersParams) (*model.GetDeployersOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) getDeployers(params *model2.GetDeployersParams) (*model2.GetDeployersOK, error) {
 	registry := new(strfmt.Registry)
 
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = model.NewGetDeployersParams()
+		params = model2.NewGetDeployersParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -1141,14 +1141,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getDeployers(params *model.GetDeployers
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             params,
-		Reader:             &model.GetDeployersReader{Formats: *registry},
+		Reader:             &model2.GetDeployersReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.GetDeployersOK)
+	success, ok := result.(*model2.GetDeployersOK)
 	if ok {
 		return success, nil
 	}
@@ -1158,10 +1158,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getDeployers(params *model.GetDeployers
 	return nil, runtime.NewAPIError("read deployer", msg, 400)
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) CreateDeployer(ctx context.Context, deployer model.Deployer) (*model.PostDeployersCreated, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) CreateDeployer(ctx context.Context, deployer model2.Deployer) (*model2.PostDeployersCreated, error) {
 	registry := new(strfmt.Registry)
 
-	params := &model.PostDeployersParams{
+	params := &model2.PostDeployersParams{
 		Body:    deployer,
 		Context: ctx,
 	}
@@ -1175,14 +1175,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) CreateDeployer(ctx context.Context, dep
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             params,
-		Reader:             &model.PostDeployersReader{Formats: *registry},
+		Reader:             &model2.PostDeployersReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PostDeployersCreated)
+	success, ok := result.(*model2.PostDeployersCreated)
 	if ok {
 		return success, nil
 	}
@@ -1195,10 +1195,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) CreateDeployer(ctx context.Context, dep
 /*
 GetDeployersServiceAccountsByNamespace lists all the service account on the system
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) GetDeployersServiceAccountsByNamespace(ctx context.Context, clusterId strfmt.UUID, namespace string) (*model.GetDeployersServiceAccountsOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) GetDeployersServiceAccountsByNamespace(ctx context.Context, clusterId strfmt.UUID, namespace string) (*model2.GetDeployersServiceAccountsOK, error) {
 	registry := new(strfmt.Registry)
 
-	params := model.GetDeployersServiceAccountsParams{
+	params := model2.GetDeployersServiceAccountsParams{
 		KubernetesClusterID: clusterId,
 		NamespaceName:       &namespace,
 		Context:             ctx,
@@ -1213,14 +1213,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetDeployersServiceAccountsByNamespace(
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             &params,
-		Reader:             &model.GetDeployersServiceAccountsReader{Formats: *registry},
+		Reader:             &model2.GetDeployersServiceAccountsReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.GetDeployersServiceAccountsOK)
+	success, ok := result.(*model2.GetDeployersServiceAccountsOK)
 	if ok {
 		return success, nil
 	}
@@ -1233,10 +1233,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetDeployersServiceAccountsByNamespace(
 /*
 DeleteDeployer deletes an deployer
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) DeleteDeployer(ctx context.Context, uuid strfmt.UUID) (*model.DeleteDeployersDeployerIDNoContent, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) DeleteDeployer(ctx context.Context, uuid strfmt.UUID) (*model2.DeleteDeployersDeployerIDNoContent, error) {
 	registry := new(strfmt.Registry)
 
-	params := model.DeleteDeployersDeployerIDParams{
+	params := model2.DeleteDeployersDeployerIDParams{
 		DeployerID: uuid,
 		Context:    ctx,
 	}
@@ -1250,14 +1250,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DeleteDeployer(ctx context.Context, uui
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             &params,
-		Reader:             &model.DeleteDeployersDeployerIDReader{Formats: *registry},
+		Reader:             &model2.DeleteDeployersDeployerIDReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.DeleteDeployersDeployerIDNoContent)
+	success, ok := result.(*model2.DeleteDeployersDeployerIDNoContent)
 	if ok {
 		return success, nil
 	}
@@ -1267,10 +1267,10 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DeleteDeployer(ctx context.Context, uui
 	return nil, runtime.NewAPIError("delete deployer", msg, 400)
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) UpdateDeployer(ctx context.Context, deployer model.Deployer) (*model.PutDeployersDeployerIDOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) UpdateDeployer(ctx context.Context, deployer model2.Deployer) (*model2.PutDeployersDeployerIDOK, error) {
 	registry := new(strfmt.Registry)
 
-	params := model.PutDeployersDeployerIDParams{
+	params := model2.PutDeployersDeployerIDParams{
 		DeployerID: deployer.ID(),
 		Body:       deployer,
 		Context:    ctx,
@@ -1287,14 +1287,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) UpdateDeployer(ctx context.Context, dep
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             &params,
-		Reader:             &model.PutDeployersDeployerIDReader{Formats: *registry},
+		Reader:             &model2.PutDeployersDeployerIDReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PutDeployersDeployerIDOK)
+	success, ok := result.(*model2.PutDeployersDeployerIDOK)
 	if ok {
 		return success, nil
 	}
@@ -1307,12 +1307,12 @@ func (serviceMgmtApi *MgmtServiceApiCtx) UpdateDeployer(ctx context.Context, dep
 /*
 PostCdPolicy sets the current c d policy at least one cd policy element should be present
 */
-func (serviceMgmtApi *MgmtServiceApiCtx) PostCdPolicy(params *model.PostCdPolicyParams) (*model.PostCdPolicyCreated, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) PostCdPolicy(params *model2.PostCdPolicyParams) (*model2.PostCdPolicyCreated, error) {
 	registry := new(strfmt.Registry)
 
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = model.NewPostCdPolicyParams()
+		params = model2.NewPostCdPolicyParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -1324,14 +1324,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) PostCdPolicy(params *model.PostCdPolicy
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             params,
-		Reader:             &model.PostCdPolicyReader{Formats: *registry},
+		Reader:             &model2.PostCdPolicyReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PostCdPolicyCreated)
+	success, ok := result.(*model2.PostCdPolicyCreated)
 	if ok {
 		return success, nil
 	}
@@ -1341,12 +1341,12 @@ func (serviceMgmtApi *MgmtServiceApiCtx) PostCdPolicy(params *model.PostCdPolicy
 	return nil, runtime.NewAPIError("create cd policy", msg, 400)
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) GetCdPolicy(params *model.GetCdPolicyParams) (*model.GetCdPolicyOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) GetCdPolicy(params *model2.GetCdPolicyParams) (*model2.GetCdPolicyOK, error) {
 	registry := new(strfmt.Registry)
 
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = model.NewGetCdPolicyParams()
+		params = model2.NewGetCdPolicyParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -1358,14 +1358,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetCdPolicy(params *model.GetCdPolicyPa
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             params,
-		Reader:             &model.GetCdPolicyReader{Formats: *registry},
+		Reader:             &model2.GetCdPolicyReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.GetCdPolicyOK)
+	success, ok := result.(*model2.GetCdPolicyOK)
 	if ok {
 		return success, nil
 	}
@@ -1375,12 +1375,12 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetCdPolicy(params *model.GetCdPolicyPa
 	return nil, runtime.NewAPIError("get cd policy", msg, 400)
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) PutCdPolicyPolicyID(params *model.PutCdPolicyPolicyIDParams) (*model.PutCdPolicyPolicyIDOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) PutCdPolicyPolicyID(params *model2.PutCdPolicyPolicyIDParams) (*model2.PutCdPolicyPolicyIDOK, error) {
 	registry := new(strfmt.Registry)
 
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = model.NewPutCdPolicyPolicyIDParams()
+		params = model2.NewPutCdPolicyPolicyIDParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -1392,14 +1392,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) PutCdPolicyPolicyID(params *model.PutCd
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             params,
-		Reader:             &model.PutCdPolicyPolicyIDReader{Formats: *registry},
+		Reader:             &model2.PutCdPolicyPolicyIDReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PutCdPolicyPolicyIDOK)
+	success, ok := result.(*model2.PutCdPolicyPolicyIDOK)
 	if ok {
 		return success, nil
 	}
@@ -1409,12 +1409,12 @@ func (serviceMgmtApi *MgmtServiceApiCtx) PutCdPolicyPolicyID(params *model.PutCd
 	return nil, runtime.NewAPIError("put cd policy", msg, 400)
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) DeleteCdPolicyPolicyID(params *model.DeleteCdPolicyPolicyIDParams) (*model.DeleteCdPolicyPolicyIDNoContent, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) DeleteCdPolicyPolicyID(params *model2.DeleteCdPolicyPolicyIDParams) (*model2.DeleteCdPolicyPolicyIDNoContent, error) {
 	registry := new(strfmt.Registry)
 
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = model.NewDeleteCdPolicyPolicyIDParams()
+		params = model2.NewDeleteCdPolicyPolicyIDParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -1426,14 +1426,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DeleteCdPolicyPolicyID(params *model.De
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             params,
-		Reader:             &model.DeleteCdPolicyPolicyIDReader{Formats: *registry},
+		Reader:             &model2.DeleteCdPolicyPolicyIDReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.DeleteCdPolicyPolicyIDNoContent)
+	success, ok := result.(*model2.DeleteCdPolicyPolicyIDNoContent)
 	if ok {
 		return success, nil
 	}
@@ -1443,12 +1443,12 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DeleteCdPolicyPolicyID(params *model.De
 	return nil, runtime.NewAPIError("delete cd policy", msg, 400)
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) PostCiPolicy(params *model.PostCiPolicyParams) (*model.PostCiPolicyCreated, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) PostCiPolicy(params *model2.PostCiPolicyParams) (*model2.PostCiPolicyCreated, error) {
 	registry := new(strfmt.Registry)
 
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = model.NewPostCiPolicyParams()
+		params = model2.NewPostCiPolicyParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -1460,14 +1460,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) PostCiPolicy(params *model.PostCiPolicy
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             params,
-		Reader:             &model.PostCiPolicyReader{Formats: *registry},
+		Reader:             &model2.PostCiPolicyReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PostCiPolicyCreated)
+	success, ok := result.(*model2.PostCiPolicyCreated)
 	if ok {
 		return success, nil
 	}
@@ -1477,12 +1477,12 @@ func (serviceMgmtApi *MgmtServiceApiCtx) PostCiPolicy(params *model.PostCiPolicy
 	return nil, runtime.NewAPIError("post ci policy", msg, 400)
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) GetCiPolicy(params *model.GetCiPolicyParams) (*model.GetCiPolicyOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) GetCiPolicy(params *model2.GetCiPolicyParams) (*model2.GetCiPolicyOK, error) {
 	registry := new(strfmt.Registry)
 
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = model.NewGetCiPolicyParams()
+		params = model2.NewGetCiPolicyParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -1494,14 +1494,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetCiPolicy(params *model.GetCiPolicyPa
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             params,
-		Reader:             &model.GetCiPolicyReader{Formats: *registry},
+		Reader:             &model2.GetCiPolicyReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.GetCiPolicyOK)
+	success, ok := result.(*model2.GetCiPolicyOK)
 	if ok {
 		return success, nil
 	}
@@ -1511,12 +1511,12 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetCiPolicy(params *model.GetCiPolicyPa
 	return nil, runtime.NewAPIError("get ci policy", msg, 400)
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) DeleteCiPolicyPolicyID(params *model.DeleteCiPolicyPolicyIDParams) (*model.DeleteCiPolicyPolicyIDNoContent, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) DeleteCiPolicyPolicyID(params *model2.DeleteCiPolicyPolicyIDParams) (*model2.DeleteCiPolicyPolicyIDNoContent, error) {
 	registry := new(strfmt.Registry)
 
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = model.NewDeleteCiPolicyPolicyIDParams()
+		params = model2.NewDeleteCiPolicyPolicyIDParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -1528,14 +1528,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DeleteCiPolicyPolicyID(params *model.De
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             params,
-		Reader:             &model.DeleteCiPolicyPolicyIDReader{Formats: *registry},
+		Reader:             &model2.DeleteCiPolicyPolicyIDReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.DeleteCiPolicyPolicyIDNoContent)
+	success, ok := result.(*model2.DeleteCiPolicyPolicyIDNoContent)
 	if ok {
 		return success, nil
 	}
@@ -1545,12 +1545,12 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DeleteCiPolicyPolicyID(params *model.De
 	return nil, runtime.NewAPIError("delete ci policy", msg, 400)
 }
 
-func (serviceMgmtApi *MgmtServiceApiCtx) PutCiPolicyPolicyID(params *model.PutCiPolicyPolicyIDParams) (*model.PutCiPolicyPolicyIDOK, error) {
+func (serviceMgmtApi *MgmtServiceApiCtx) PutCiPolicyPolicyID(params *model2.PutCiPolicyPolicyIDParams) (*model2.PutCiPolicyPolicyIDOK, error) {
 	registry := new(strfmt.Registry)
 
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = model.NewPutCiPolicyPolicyIDParams()
+		params = model2.NewPutCiPolicyPolicyIDParams()
 	}
 
 	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
@@ -1562,14 +1562,14 @@ func (serviceMgmtApi *MgmtServiceApiCtx) PutCiPolicyPolicyID(params *model.PutCi
 		Schemes:            []string{"https"},
 		AuthInfo:           serviceMgmtApi.auth,
 		Params:             params,
-		Reader:             &model.PutCiPolicyPolicyIDReader{Formats: *registry},
+		Reader:             &model2.PutCiPolicyPolicyIDReader{Formats: *registry},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*model.PutCiPolicyPolicyIDOK)
+	success, ok := result.(*model2.PutCiPolicyPolicyIDOK)
 	if ok {
 		return success, nil
 	}
