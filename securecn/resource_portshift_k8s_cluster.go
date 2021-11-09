@@ -52,6 +52,7 @@ const InternalRegistryFieldName = "internal_registry"
 const ServiceDiscoveryIsolationFieldName = "service_discovery_isolation"
 const TLSInspectionFieldName = "tls_inspection"
 const TokenInjectionFieldName = "token_injection"
+const TracingSupportFieldName = "tracing_support"
 const TraceAnalyzerFieldName = "trace_analyzer"
 const SpecReconstructionFieldName = "spec_reconstruction"
 const SidecarResourcesFieldName = "sidecar_resources"
@@ -116,6 +117,7 @@ func ResourceCluster() *schema.Resource {
 			ServiceDiscoveryIsolationFieldName:       {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the service discovery isolation is enabled"},
 			TLSInspectionFieldName:                   {Type: schema.TypeBool, Optional: true, Computed: true, Description: "Indicates whether the TLS inspection is enabled"},
 			TokenInjectionFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the token injection is enabled"},
+			TracingSupportFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install tracing support, enable for apiSecurity accounts."},
 			TraceAnalyzerFieldName:                   {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the trace analyzer is enabled"},
 			SpecReconstructionFieldName:              {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the OpenAPI specification reconstruction is enabled"},
 			ExternalCAFieldName: {
@@ -495,9 +497,10 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	enableServiceDiscoveryIsolation := d.Get(ServiceDiscoveryIsolationFieldName).(bool)
 	enableTLSInspection := d.Get(TLSInspectionFieldName).(bool)
 	enableTokenInjection := d.Get(TokenInjectionFieldName).(bool)
+	tracingSupportEnabled := d.Get(TracingSupportFieldName).(bool)
 	traceAnalyzerEnabled := d.Get(TraceAnalyzerFieldName).(bool)
 	specReconstructionEnabled := d.Get(SpecReconstructionFieldName).(bool)
-	installTracingSupport := traceAnalyzerEnabled || specReconstructionEnabled
+	installTracingSupport := tracingSupportEnabled || traceAnalyzerEnabled || specReconstructionEnabled
 
 	cluster := &model.KubernetesCluster{
 		AgentFailClose:                    &failClose,
