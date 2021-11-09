@@ -6,14 +6,12 @@ package model
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"context"
 	"encoding/json"
 	"strconv"
-	"time"
+
+	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
-	"github.com/go-openapi/runtime"
-	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 )
@@ -105,8 +103,8 @@ type KubernetesCluster struct {
 	// indicates whether token injection is enabled
 	TokenInjectionEnabled *bool `json:"tokenInjectionEnabled,omitempty"`
 
-	// indicates whether trace Analyzer is enabled
-	TraceAnalyzerEnabled *bool `json:"traceAnalyzerEnabled,omitempty"`
+	// tracing support configuration. enabled for ApiSecurity enabled accounts
+	TracingSupportSettings *TracingSupportSettings `json:"tracingSupportSettings,omitempty"`
 }
 
 // Validate validates this kubernetes cluster
@@ -154,6 +152,10 @@ func (m *KubernetesCluster) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateSidecarsResources(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTracingSupportSettings(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -383,6 +385,24 @@ func (m *KubernetesCluster) validateSidecarsResources(formats strfmt.Registry) e
 	return nil
 }
 
+func (m *KubernetesCluster) validateTracingSupportSettings(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.TracingSupportSettings) { // not required
+		return nil
+	}
+
+	if m.TracingSupportSettings != nil {
+		if err := m.TracingSupportSettings.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("tracingSupportSettings")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 // MarshalBinary interface implementation
 func (m *KubernetesCluster) MarshalBinary() ([]byte, error) {
 	if m == nil {
@@ -398,154 +418,5 @@ func (m *KubernetesCluster) UnmarshalBinary(b []byte) error {
 		return err
 	}
 	*m = res
-	return nil
-}
-
-type ClusterPodDefinitionSource string
-
-const (
-
-	// ClusterPodDefinitionSourceKUBERNETES captures enum value "KUBERNETES"
-	ClusterPodDefinitionSourceKUBERNETES ClusterPodDefinitionSource = "KUBERNETES"
-
-	// ClusterPodDefinitionSourceCD captures enum value "CD"
-	ClusterPodDefinitionSourceCD ClusterPodDefinitionSource = "CD"
-)
-
-// for schema
-var clusterPodDefinitionSourceEnum []interface{}
-
-func init() {
-	var res []ClusterPodDefinitionSource
-	if err := json.Unmarshal([]byte(`["KUBERNETES","CD"]`), &res); err != nil {
-		panic(err)
-	}
-	for _, v := range res {
-		clusterPodDefinitionSourceEnum = append(clusterPodDefinitionSourceEnum, v)
-	}
-}
-
-func (m ClusterPodDefinitionSource) validateClusterPodDefinitionSourceEnum(path, location string, value ClusterPodDefinitionSource) error {
-	if err := validate.Enum(path, location, value, clusterPodDefinitionSourceEnum); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Validate validates this cluster pod definition source
-func (m ClusterPodDefinitionSource) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	// value enum
-	if err := m.validateClusterPodDefinitionSourceEnum("", "body", m); err != nil {
-		return err
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-type ProxyConfiguration struct {
-
-	// Specifies if the proxy configuration should be used
-	EnableProxy *bool `json:"enableProxy,omitempty"`
-
-	// https proxy
-	HTTPSProxy string `json:"httpsProxy,omitempty"`
-}
-
-// Validate validates this proxy configuration
-func (m *ProxyConfiguration) Validate(formats strfmt.Registry) error {
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ProxyConfiguration) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *ProxyConfiguration) UnmarshalBinary(b []byte) error {
-	var res ProxyConfiguration
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-type IstioInstallationParameters struct {
-
-	// indicates whether Istio is already installed on this cluster (which means SecureCN should not install it)
-	IsIstioAlreadyInstalled *bool `json:"isIstioAlreadyInstalled,omitempty"`
-
-	// when istio already installed, choose the version from supported istio versions list: /istio/supportedVersions
-	IstioVersion string `json:"istioVersion,omitempty"`
-}
-
-// Validate validates this istio installation parameters
-func (m *IstioInstallationParameters) Validate(formats strfmt.Registry) error {
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *IstioInstallationParameters) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *IstioInstallationParameters) UnmarshalBinary(b []byte) error {
-	var res IstioInstallationParameters
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-type DownloadBundleParams struct {
-
-	/*KubernetesClusterID
-	  SecureCN Kubernetes cluster ID
-
-	*/
-	KubernetesClusterID strfmt.UUID
-	Context             context.Context
-	Timeout             time.Duration
-}
-
-// WriteToRequest writes these params to a swagger request
-func (o *DownloadBundleParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
-
-	if err := r.SetTimeout(o.Timeout); err != nil {
-		return err
-	}
-	var res []error
-
-	// path param namespaceId
-	if err := r.SetPathParam("kubernetesClusterId", o.KubernetesClusterID.String()); err != nil {
-		return err
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-// validateKubernetesClusterID carries on validations for parameter KubernetesClusterID
-func (o *DownloadBundleParams) validateKubernetesClusterID(formats strfmt.Registry) error {
-
-	if err := validate.FormatOf("kubernetesClusterId", "path", "uuid", o.KubernetesClusterID.String(), formats); err != nil {
-		return err
-	}
 	return nil
 }

@@ -52,7 +52,9 @@ const InternalRegistryFieldName = "internal_registry"
 const ServiceDiscoveryIsolationFieldName = "service_discovery_isolation"
 const TLSInspectionFieldName = "tls_inspection"
 const TokenInjectionFieldName = "token_injection"
+const TracingSupportFieldName = "tracing_support"
 const TraceAnalyzerFieldName = "trace_analyzer"
+const SpecReconstructionFieldName = "spec_reconstruction"
 const SidecarResourcesFieldName = "sidecar_resources"
 const MultiClusterCommunicationSupportFieldName = "multi_cluster_communication_support"
 const MultiClusterCommunicationSupportCertsPathFieldName = MultiClusterCommunicationSupportFieldName + "_certs_path"
@@ -115,7 +117,9 @@ func ResourceCluster() *schema.Resource {
 			ServiceDiscoveryIsolationFieldName:       {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the service discovery isolation is enabled"},
 			TLSInspectionFieldName:                   {Type: schema.TypeBool, Optional: true, Computed: true, Description: "Indicates whether the TLS inspection is enabled"},
 			TokenInjectionFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the token injection is enabled"},
+			TracingSupportFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install tracing support, enable for apiSecurity accounts."},
 			TraceAnalyzerFieldName:                   {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the trace analyzer is enabled"},
+			SpecReconstructionFieldName:              {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the OpenAPI specification reconstruction is enabled"},
 			ExternalCAFieldName: {
 				Description: "Use an external CA for this cluster",
 				Optional:    true,
@@ -493,7 +497,11 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	enableServiceDiscoveryIsolation := d.Get(ServiceDiscoveryIsolationFieldName).(bool)
 	enableTLSInspection := d.Get(TLSInspectionFieldName).(bool)
 	enableTokenInjection := d.Get(TokenInjectionFieldName).(bool)
-	enableTraceAnalyzer := d.Get(TraceAnalyzerFieldName).(bool)
+	tracingSupportEnabled := d.Get(TracingSupportFieldName).(bool)
+	traceAnalyzerEnabled := d.Get(TraceAnalyzerFieldName).(bool)
+	specReconstructionEnabled := d.Get(SpecReconstructionFieldName).(bool)
+	installTracingSupport := tracingSupportEnabled || traceAnalyzerEnabled || specReconstructionEnabled
+
 	cluster := &model.KubernetesCluster{
 		AgentFailClose:                    &failClose,
 		CiImageValidation:                 &ciImageValidation,
@@ -517,7 +525,14 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		ServiceDiscoveryIsolationEnabled:  &enableServiceDiscoveryIsolation,
 		TLSInspectionEnabled:              &enableTLSInspection,
 		TokenInjectionEnabled:             &enableTokenInjection,
-		TraceAnalyzerEnabled:              &enableTraceAnalyzer,
+	}
+
+	if installTracingSupport {
+		cluster.TracingSupportSettings = &model.TracingSupportSettings{
+			InstallTracingSupport:    &installTracingSupport,
+			TraceAnalyzerEnabled:     &traceAnalyzerEnabled,
+			SpecReconstructorEnabled: &specReconstructionEnabled,
+		}
 	}
 
 	externalCaId := utils2.ReadNestedStringFromTF(d, ExternalCAFieldName, "id", 0)
