@@ -48,6 +48,7 @@ A SecureCN k8s cluster
 - **tls_inspection** (Boolean) Indicates whether the TLS inspection is enabled
 - **token_injection** (Boolean) Indicates whether the token injection is enabled
 - **trace_analyzer** (Boolean) Indicates whether the trace analyzer is enabled
+- **tracing_support** (Boolean) Indicates whether to install tracing support, enable for apiSecurity accounts.
 - **venafi_integration** (Boolean) Enable Venafi integration
 
 <a id="nestedblock--external_ca"></a>
