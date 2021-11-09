@@ -2,7 +2,7 @@ terraform {
   required_providers {
     securecn = {
       source = "Portshift/securecn"
-      version = ">= 1.0.0"
+      version = ">= 1.1.0"
     }
   }
 }
