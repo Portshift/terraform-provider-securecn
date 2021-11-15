@@ -231,6 +231,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	err = installAgent(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext, multiClusterFolder, tokenInjection)
 	if err != nil {
+		_ = serviceApi.DeleteKubernetesCluster(ctx, httpClientWrapper.HttpClient, clusterId)
 		return diag.FromErr(err)
 	}
 
@@ -362,13 +363,13 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 		return err
 	}
 
-	_, err = utils2.ExecuteScript(scriptFilePath, multiClusterFolder)
-	log.Print("[DEBUG] agent installed successfully")
-
+	output, err := utils2.ExecuteScript(scriptFilePath, multiClusterFolder)
 	if err != nil {
 		_ = changeK8Context(currentContext, err)
-		return err
+		return fmt.Errorf("%s:\n%s", err, output)
 	}
+
+	log.Print("[DEBUG] agent installed successfully")
 
 	err = changeK8Context(currentContext, err)
 	if err != nil {
