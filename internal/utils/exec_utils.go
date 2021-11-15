@@ -51,13 +51,12 @@ func ExecuteScript(scriptPath string, multiClusterCertsFolder string) (string, e
 		command = command + " -c " + multiClusterCertsFolder
 	}
 
-	_, err = ExecBashCommand(command)
-
+	output, err := ExecBashCommand(command)
 	if err != nil {
-		return "", err
+		return output, err
 	}
 
-	return "", nil
+	return output, nil
 }
 
 func applyYaml(yamlPath string) (string, error) {
