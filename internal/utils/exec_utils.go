@@ -12,7 +12,7 @@ const kubectlApplyCommand = "kubectl apply -f "
 func ExecBashCommand(command string) (string, error) {
 	log.Printf("[DEBUG] executing bash command")
 
-	cmd := exec.Command("bash", "-x", command)
+	cmd := exec.Command("bash", "-x", "-c", command)
 
 	stderr, _ := cmd.StderrPipe()
 
