@@ -34,7 +34,7 @@ func ExecBashCommand(command string) (string, error) {
 	return string(output), nil
 }
 
-func ExecuteScript(scriptPath string, multiClusterCertsFolder string) (string, error) {
+func ExecuteScript(scriptPath string, multiClusterCertsFolder string, skipReadyCheck bool) (string, error) {
 	log.Printf("[DEBUG] executing script")
 
 	//if runtime.GOOS == "windows" {
@@ -49,6 +49,10 @@ func ExecuteScript(scriptPath string, multiClusterCertsFolder string) (string, e
 	command := "./" + scriptPath
 	if multiClusterCertsFolder != "" {
 		command = command + " -c " + multiClusterCertsFolder
+	}
+
+	if skipReadyCheck {
+		command = command + " --skip-ready-check"
 	}
 
 	output, err := ExecBashCommand(command)

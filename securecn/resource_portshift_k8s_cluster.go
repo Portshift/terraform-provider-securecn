@@ -52,6 +52,7 @@ const InternalRegistryFieldName = "internal_registry"
 const ServiceDiscoveryIsolationFieldName = "service_discovery_isolation"
 const TLSInspectionFieldName = "tls_inspection"
 const TokenInjectionFieldName = "token_injection"
+const SkipReadyCheckFieldName = "skip_ready_check"
 const TracingSupportFieldName = "tracing_support"
 const TraceAnalyzerFieldName = "trace_analyzer"
 const SpecReconstructionFieldName = "spec_reconstruction"
@@ -117,6 +118,7 @@ func ResourceCluster() *schema.Resource {
 			ServiceDiscoveryIsolationFieldName:       {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the service discovery isolation is enabled"},
 			TLSInspectionFieldName:                   {Type: schema.TypeBool, Optional: true, Computed: true, Description: "Indicates whether the TLS inspection is enabled"},
 			TokenInjectionFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the token injection is enabled"},
+			SkipReadyCheckFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the cluster installation should be async"},
 			TracingSupportFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install tracing support, enable for apiSecurity accounts."},
 			TraceAnalyzerFieldName:                   {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the trace analyzer is enabled"},
 			SpecReconstructionFieldName:              {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the OpenAPI specification reconstruction is enabled"},
@@ -228,8 +230,9 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	k8sContext := d.Get(KubernetesClusterContextFieldName).(string)
 	multiClusterFolder := d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string)
 	tokenInjection := d.Get(TokenInjectionFieldName).(bool)
+	skipReadyCheck := d.Get(SkipReadyCheckFieldName).(bool)
 
-	err = installAgent(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext, multiClusterFolder, tokenInjection)
+	err = installAgent(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext, multiClusterFolder, tokenInjection, skipReadyCheck)
 	if err != nil {
 		_ = serviceApi.DeleteKubernetesCluster(ctx, httpClientWrapper.HttpClient, clusterId)
 		return diag.FromErr(err)
@@ -263,7 +266,8 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 		k8sContext := d.Get(KubernetesClusterContextFieldName).(string)
 		certsFolder := d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string)
 		tokenInjection := d.Get(TokenInjectionFieldName).(bool)
-		err = updateAgent(k8sContext, certsFolder, kubernetesClusterFromConfig, tokenInjection, *secureCNCluster.Payload.IsMultiCluster, *secureCNCluster.Payload.EnableConnectionsControl, *secureCNCluster.Payload.AgentFailClose, *secureCNCluster.Payload.IsPersistent, *secureCNCluster.Payload.ProxyConfiguration, serviceApi, httpClientWrapper, strfmt.UUID(clusterId))
+		skipReadyCheck := d.Get(SkipReadyCheckFieldName).(bool)
+		err = updateAgent(k8sContext, certsFolder, kubernetesClusterFromConfig, tokenInjection, *secureCNCluster.Payload.IsMultiCluster, *secureCNCluster.Payload.EnableConnectionsControl, *secureCNCluster.Payload.AgentFailClose, *secureCNCluster.Payload.IsPersistent, *secureCNCluster.Payload.ProxyConfiguration, serviceApi, httpClientWrapper, strfmt.UUID(clusterId), skipReadyCheck)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -305,7 +309,7 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	certsFolder := d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string)
 	tokenInjection := d.Get(TokenInjectionFieldName).(bool)
 
-	err = updateAgent(k8sContext, certsFolder, kubernetesClusterFromConfig, tokenInjection, *updatedCluster.Payload.IsMultiCluster, *updatedCluster.Payload.EnableConnectionsControl, *updatedCluster.Payload.AgentFailClose, *updatedCluster.Payload.IsPersistent, *updatedCluster.Payload.ProxyConfiguration, serviceApi, httpClientWrapper, strfmt.UUID(clusterId)) //TODO update other fields, tests
+	err = updateAgent(k8sContext, certsFolder, kubernetesClusterFromConfig, tokenInjection, *updatedCluster.Payload.IsMultiCluster, *updatedCluster.Payload.EnableConnectionsControl, *updatedCluster.Payload.AgentFailClose, *updatedCluster.Payload.IsPersistent, *updatedCluster.Payload.ProxyConfiguration, serviceApi, httpClientWrapper, strfmt.UUID(clusterId), false) //TODO update other fields, tests
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -339,7 +343,7 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, context string, multiClusterFolder string, tokenInjection bool) error {
+func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, context string, multiClusterFolder string, tokenInjection bool, skipReadyCheck bool) error {
 	log.Print("[DEBUG] installing agent")
 	err := downloadAndExtractBundle(ctx, serviceApi, httpClientWrapper, clusterId)
 	if err != nil {
@@ -363,7 +367,7 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 		return err
 	}
 
-	output, err := utils2.ExecuteScript(scriptFilePath, multiClusterFolder)
+	output, err := utils2.ExecuteScript(scriptFilePath, multiClusterFolder, skipReadyCheck)
 	if err != nil {
 		_ = changeK8Context(currentContext, err)
 		return fmt.Errorf("%s:\n%s", err, output)
@@ -638,7 +642,7 @@ func validateConfig(d *schema.ResourceData) error {
 	return nil
 }
 
-func updateAgent(context string, multiClusterFolder string, clusterInTerraformConfig *model.KubernetesCluster, tokenInjection bool, prevIsMultiCluster bool, prevConnectionControl bool, prevAgentFailClose bool, prevIsPersistent bool, prevProxyConfiguration model.ProxyConfiguration, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID) error {
+func updateAgent(context string, multiClusterFolder string, clusterInTerraformConfig *model.KubernetesCluster, tokenInjection bool, prevIsMultiCluster bool, prevConnectionControl bool, prevAgentFailClose bool, prevIsPersistent bool, prevProxyConfiguration model.ProxyConfiguration, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, skipReadyCheck bool) error {
 	needsUpdate := *clusterInTerraformConfig.IsMultiCluster != prevIsMultiCluster
 	needsUpdate = needsUpdate || *clusterInTerraformConfig.EnableConnectionsControl != prevConnectionControl
 	needsUpdate = needsUpdate || *clusterInTerraformConfig.AgentFailClose != prevAgentFailClose
@@ -652,7 +656,7 @@ func updateAgent(context string, multiClusterFolder string, clusterInTerraformCo
 		if err != nil {
 			return err
 		}
-		err = installAgent(nil, serviceApi, httpClientWrapper, clusterId, context, multiClusterFolder, tokenInjection)
+		err = installAgent(nil, serviceApi, httpClientWrapper, clusterId, context, multiClusterFolder, tokenInjection, skipReadyCheck)
 		if err != nil {
 			return err
 		}
