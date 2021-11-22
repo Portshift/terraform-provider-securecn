@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -29,13 +30,13 @@ const patchDnsFilePath = "patch_dns.sh"
 const certsGenFilePath = "certs_gen.sh"
 const vaultCertsGenFilePath = "certs_gen_vault.sh"
 const vaultCertsFolder = "vault_certs"
-const uninstallAgentCommand = "kubectl get cm -n portshift portshift-uninstaller -o jsonpath='{.data.config}' | bash"
-const getCurrentK8ContextCommand = "kubectl config current-context"
-const useK8ContextCommandFormat = "kubectl config use-context %s"
+const uninstallAgentCommandFormat = "KUBECONFIG=%s kubectl get cm -n portshift portshift-uninstaller -o jsonpath='{.data.config}' | KUBECONFIG=%s bash"
+const useK8sContextCommandFormat = "kubectl config use-context"
+const viewK8sConfigCommand = "kubectl config view --raw"
 const kubectlGetAllContextsCommand = "kubectl config view -o jsonpath='{.contexts[*].name}'"
 
 const KubernetesClusterContextFieldName = "kubernetes_cluster_context"
-const NameFieldName = "name"
+const NameFieldName = "name" + nameFieldName
 const CiImageValidationFieldName = "ci_image_validation"
 const RestrictRegistries = "restrict_registries"
 const CdPodTemplateFieldName = "cd_pod_template"
@@ -357,28 +358,19 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 		}
 	}
 
-	currentContext, err := utils2.ExecBashCommand(getCurrentK8ContextCommand)
+	kubeconfig, err := changeK8Context(context)
 	if err != nil {
 		return err
 	}
 
-	err = changeK8Context(context, err)
-	if err != nil {
-		return err
-	}
+	defer os.Remove(kubeconfig)
 
-	output, err := utils2.ExecuteScript(scriptFilePath, multiClusterFolder, skipReadyCheck)
+	output, err := utils2.ExecuteScript(scriptFilePath, multiClusterFolder, skipReadyCheck, kubeconfig)
 	if err != nil {
-		_ = changeK8Context(currentContext, err)
 		return fmt.Errorf("%s:\n%s", err, output)
 	}
 
 	log.Print("[DEBUG] agent installed successfully")
-
-	err = changeK8Context(currentContext, err)
-	if err != nil {
-		return err
-	}
 
 	defer os.Remove(yamlFilePath)
 	defer os.Remove(scriptFilePath)
@@ -399,23 +391,14 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 func deleteAgent(context string) error {
 	log.Printf("[DEBUG] deleting agent from context: " + context)
 
-	currentContext, err := utils2.ExecBashCommand(getCurrentK8ContextCommand)
+	kubeconfig, err := changeK8Context(context)
 	if err != nil {
 		return err
 	}
 
-	err = changeK8Context(context, err)
-	if err != nil {
-		return err
-	}
+	defer os.Remove(kubeconfig)
 
-	_, err = utils2.ExecBashCommand(uninstallAgentCommand)
-	if err != nil {
-		_ = changeK8Context(currentContext, err)
-		return err
-	}
-
-	err = changeK8Context(currentContext, err)
+	_, err = utils2.ExecBashCommand(fmt.Sprintf(uninstallAgentCommandFormat, kubeconfig, kubeconfig))
 	if err != nil {
 		return err
 	}
@@ -423,17 +406,41 @@ func deleteAgent(context string) error {
 	return nil
 }
 
-func changeK8Context(context string, err error) error {
+func changeK8Context(context string) (string, error) {
 	log.Print("[DEBUG] changing k8s context to " + context)
-	changeContextCommand := fmt.Sprintf(useK8ContextCommandFormat, context)
-	_, err = utils2.ExecBashCommand(changeContextCommand)
 
+	kubeconfig, err := utils2.ExecBashCommand(viewK8sConfigCommand)
 	if err != nil {
-		log.Print("[DEBUG] failed to change k8s context: " + err.Error())
-		return err
+		log.Print("[DEBUG] failed to print k8s config: " + err.Error())
+		return "", err
 	}
 
-	return nil
+	kubeconfigfile, err := ioutil.TempFile(".", "kubeconfig")
+	if err != nil {
+		log.Print("[DEBUG] failed to create temporary k8s config: " + err.Error())
+		return "", err
+	}
+
+	_, err = kubeconfigfile.WriteString(kubeconfig)
+	if err != nil {
+		log.Print("[DEBUG] failed to write temporary k8s config: " + err.Error())
+		return "", err
+	}
+
+	err = kubeconfigfile.Close()
+	if err != nil {
+		log.Print("[DEBUG] failed to close temporary k8s config: " + err.Error())
+		return "", err
+	}
+
+	changeContextCommand := fmt.Sprintf("KUBECONFIG=%s %s %s", kubeconfigfile.Name(), useK8sContextCommandFormat, context)
+	_, err = utils2.ExecBashCommand(changeContextCommand)
+	if err != nil {
+		log.Print("[DEBUG] failed to change k8s context: " + err.Error())
+		return "", err
+	}
+
+	return kubeconfigfile.Name(), nil
 }
 
 func downloadAndExtractBundle(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID) error {
@@ -604,17 +611,17 @@ func downloadFile(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.KubernetesCluster) {
 	log.Print("[DEBUG] updating mutable fields agent")
 
-	_ = d.Set("name", secureCNCluster.Name)
-	_ = d.Set("ci_image_validation", secureCNCluster.CiImageValidation)
-	_ = d.Set("cd_pod_template", secureCNCluster.ClusterPodDefinitionSource == "CD")
-	_ = d.Set("connections_control", secureCNCluster.EnableConnectionsControl)
-	_ = d.Set("istio_version", secureCNCluster.IstioInstallationParameters.IstioVersion)
-	_ = d.Set("supports_multi_cluster_communication", secureCNCluster.IsMultiCluster)
-	_ = d.Set("inspect_incoming_cluster_connections", secureCNCluster.PreserveOriginalSourceIP)
-	_ = d.Set("fail_close", secureCNCluster.AgentFailClose)
-	_ = d.Set("persistent_storage", secureCNCluster.IsPersistent)
-	_ = d.Set("external_https_proxy", secureCNCluster.ProxyConfiguration.HTTPSProxy)
-	_ = d.Set("orchestration_type", secureCNCluster.OrchestrationType)
+	_ = d.Set(NameFieldName, secureCNCluster.Name)
+	_ = d.Set(CiImageValidationFieldName, secureCNCluster.CiImageValidation)
+	_ = d.Set(CdPodTemplateFieldName, secureCNCluster.ClusterPodDefinitionSource == "CD")
+	_ = d.Set(ConnectionsControlFieldName, secureCNCluster.EnableConnectionsControl)
+	_ = d.Set(IstioVersionFieldName, secureCNCluster.IstioInstallationParameters.IstioVersion)
+	_ = d.Set(MultiClusterCommunicationSupportFieldName, secureCNCluster.IsMultiCluster)
+	_ = d.Set(InspectIncomingClusterConnectionsFieldName, secureCNCluster.PreserveOriginalSourceIP)
+	_ = d.Set(FailCloseFieldName, secureCNCluster.AgentFailClose)
+	_ = d.Set(PersistentStorageFieldName, secureCNCluster.IsPersistent)
+	_ = d.Set(ExternalHttpsProxyFieldName, secureCNCluster.ProxyConfiguration.HTTPSProxy)
+	_ = d.Set(OrchestrationTypeFieldName, secureCNCluster.OrchestrationType)
 	_ = d.Set(TLSInspectionFieldName, secureCNCluster.TLSInspectionEnabled)
 	_ = d.Set(TokenInjectionFieldName, secureCNCluster.TokenInjectionEnabled)
 	_ = d.Set(ServiceDiscoveryIsolationFieldName, secureCNCluster.ServiceDiscoveryIsolationEnabled)

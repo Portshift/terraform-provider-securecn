@@ -2,15 +2,14 @@ package utils
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
 )
 
-const kubectlApplyCommand = "kubectl apply -f "
-
 func ExecBashCommand(command string) (string, error) {
-	log.Printf("[DEBUG] executing bash command")
+	log.Printf("[DEBUG] executing bash command: %s", command)
 
 	cmd := exec.Command("bash", "-x", "-c", command)
 
@@ -34,12 +33,8 @@ func ExecBashCommand(command string) (string, error) {
 	return string(output), nil
 }
 
-func ExecuteScript(scriptPath string, multiClusterCertsFolder string, skipReadyCheck bool) (string, error) {
+func ExecuteScript(scriptPath string, multiClusterCertsFolder string, skipReadyCheck bool, kubeconfig string) (string, error) {
 	log.Printf("[DEBUG] executing script")
-
-	//if runtime.GOOS == "windows" {
-	//	return applyYaml(yamlPath)
-	//}
 
 	err := MakeExecutable(scriptPath)
 	if err != nil {
@@ -55,17 +50,12 @@ func ExecuteScript(scriptPath string, multiClusterCertsFolder string, skipReadyC
 		command = command + " --skip-ready-check"
 	}
 
-	output, err := ExecBashCommand(command)
+	output, err := ExecBashCommand(fmt.Sprintf("KUBECONFIG=%s %s", kubeconfig, command))
 	if err != nil {
 		return output, err
 	}
 
 	return output, nil
-}
-
-func applyYaml(yamlPath string) (string, error) {
-	log.Printf("[DEBUG] applying yaml: " + yamlPath)
-	return ExecBashCommand(kubectlApplyCommand + yamlPath)
 }
 
 func MakeExecutable(scriptPath string) error {
