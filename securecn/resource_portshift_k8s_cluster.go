@@ -358,7 +358,7 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 		}
 	}
 
-	kubeconfig, err := changeK8Context(context)
+	kubeconfig, err := createTempKubeconfig(context)
 	if err != nil {
 		return err
 	}
@@ -391,7 +391,7 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 func deleteAgent(context string) error {
 	log.Printf("[DEBUG] deleting agent from context: " + context)
 
-	kubeconfig, err := changeK8Context(context)
+	kubeconfig, err := createTempKubeconfig(context)
 	if err != nil {
 		return err
 	}
@@ -406,7 +406,7 @@ func deleteAgent(context string) error {
 	return nil
 }
 
-func changeK8Context(context string) (string, error) {
+func createTempKubeconfig(context string) (string, error) {
 	log.Print("[DEBUG] changing k8s context to " + context)
 
 	kubeconfig, err := utils2.ExecBashCommand(viewK8sConfigCommand)
