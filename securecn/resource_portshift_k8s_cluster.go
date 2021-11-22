@@ -36,7 +36,7 @@ const viewK8sConfigCommand = "kubectl config view --raw"
 const kubectlGetAllContextsCommand = "kubectl config view -o jsonpath='{.contexts[*].name}'"
 
 const KubernetesClusterContextFieldName = "kubernetes_cluster_context"
-const NameFieldName = "name" + nameFieldName
+const NameFieldName = "name"
 const CiImageValidationFieldName = "ci_image_validation"
 const RestrictRegistries = "restrict_registries"
 const CdPodTemplateFieldName = "cd_pod_template"
