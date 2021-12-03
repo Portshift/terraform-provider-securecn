@@ -73,7 +73,7 @@ jobs:
         
     - name: Create kind cluster
       run: |
-        kind cluster create
+        kind create cluster
 
     - name: TF acceptance tests
       timeout-minutes: 10
