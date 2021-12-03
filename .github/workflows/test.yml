@@ -71,6 +71,10 @@ jobs:
         mkdir -p ${PROVIDER_DIR}
         go build -v -o ${PROVIDER_DIR}/terraform-provider-securecn
         
+    - name: Create kind cluster
+      run: |
+        kind cluster create
+
     - name: TF acceptance tests
       timeout-minutes: 10
       env:
