@@ -696,7 +696,7 @@ func mutateSource(d *schema.ResourceData, currentRuleInSecureCN *model2.CdConnec
 		_ = d.Set(sourcePodAnyFieldName, nil)
 	} else if currentSourcePartTypeInSecureCN == "PodAnyConnectionRulePart" {
 		currentSourceInSecureCN := source.(*model2.PodAnyConnectionRulePart)
-		_ = d.Set(sourcePodAnyFieldName, currentSourceInSecureCN)
+		_ = d.Set(sourcePodAnyFieldName, []string{currentSourceInSecureCN.VulnerabilitySeverityLevel})
 		_ = d.Set(sourcePodLabelFieldName, nil)
 		_ = d.Set(sourcePodNameFieldName, nil)
 		_ = d.Set(sourceIpRangeFieldName, nil)
