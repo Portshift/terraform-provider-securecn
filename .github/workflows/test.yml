@@ -81,6 +81,9 @@ jobs:
       env:
         TF_ACC: "1"
         TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform }}
+        SECURECN_ACCESS_KEY: ${{ secrets.SECURECN_ACCESS_KEY }}
+        SECURECN_SECRET_KEY: ${{ secrets.SECURECN_SECRET_KEY }}
+        SECURECN_SERVER_URL: ${{ secrets.SECURECN_SERVER_URL }}
 
         # Set whatever additional acceptance test env vars here. You can
         # optionally use data from your repository secrets using the
