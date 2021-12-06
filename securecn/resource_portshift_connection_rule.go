@@ -644,7 +644,10 @@ func mutateDestination(d *schema.ResourceData, currentRule *model2.CdConnectionR
 		_ = d.Set(destinationPodNameFieldName, nil)
 		_ = d.Set(destinationPodAnyFieldName, nil)
 	} else if destinationPartType == "PodAnyConnectionRulePart" {
-		_ = d.Set(destinationPodAnyFieldName, destination)
+		currentDestinationInSecureCN := destination.(*model2.PodAnyConnectionRulePart)
+		_ = d.Set(sourcePodAnyFieldName, []map[string]string{{
+			connectionRuleVulnerabilitySeverityFieldName: currentDestinationInSecureCN.VulnerabilitySeverityLevel,
+		}})
 		_ = d.Set(destinationAddressIpRangeFieldName, nil)
 		_ = d.Set(destinationAddressDomainFieldName, nil)
 		_ = d.Set(destinationExternalFieldName, nil)
