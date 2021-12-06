@@ -87,6 +87,7 @@ jobs:
         SECURECN_SERVER_URL: ${{ secrets.SECURECN_SERVER_URL }}
       run: |
         sed -i.bak 's/Portshift\/securecn/cisco.com\/Portshift\/securecn/' main.tf
+        terraform version
         terraform init
         terraform apply -auto-approve
 
