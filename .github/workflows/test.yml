@@ -95,4 +95,4 @@ jobs:
         sed -i.bak 's/Portshift\/securecn/cisco.com\/Portshift\/securecn/' main.tf
         terraform init
         terraform apply -auto-approve
-        terraform destroy
+        terraform destroy -auto-approve
