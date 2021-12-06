@@ -27,7 +27,15 @@ resource "securecn_environment" "env1" {
   }
 }
 
+resource "time_sleep" "wait_for_first_status_sync" {
+  depends_on = [securecn_k8s_cluster.local]
+
+  create_duration = "30s"
+}
+
 resource "securecn_deployer" "vault" {
+  depends_on = [time_sleep.wait_for_first_status_sync]
+
   name = "vault"
   operator_deployer {
     cluster_id      = securecn_k8s_cluster.local.id

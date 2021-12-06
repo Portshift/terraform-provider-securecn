@@ -71,9 +71,10 @@ jobs:
         mkdir -p ${PROVIDER_DIR}
         go build -v -o ${PROVIDER_DIR}/terraform-provider-securecn
         
-    - name: Create kind cluster
+    - name: Create kind cluster and Vault deployer SA
       run: |
         kind create cluster
+        kubectl apply -f https://raw.githubusercontent.com/banzaicloud/bank-vaults/master/operator/deploy/rbac.yaml
 
     - name: TF acceptance tests
       timeout-minutes: 10
