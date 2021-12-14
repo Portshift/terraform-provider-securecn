@@ -7,8 +7,8 @@ terraform {
   }
 }
 
-resource "securecn_k8s_cluster" "local" {
-  name                       = "local"
+resource "securecn_k8s_cluster" "terraform" {
+  name                       = "terraform"
   kubernetes_cluster_context = "kind-kind"
   orchestration_type         = "KUBERNETES"
 }
@@ -18,7 +18,7 @@ resource "securecn_environment" "env1" {
   description = "desc"
 
   kubernetes_environment {
-    cluster_name = securecn_k8s_cluster.local.name
+    cluster_name = securecn_k8s_cluster.terraform.name
 
     namespaces_by_labels = {
       key11 = "value11"
@@ -27,10 +27,18 @@ resource "securecn_environment" "env1" {
   }
 }
 
+resource "time_sleep" "wait_for_first_status_sync" {
+  depends_on = [securecn_k8s_cluster.terraform]
+
+  create_duration = "30s"
+}
+
 resource "securecn_deployer" "vault" {
+  depends_on = [time_sleep.wait_for_first_status_sync]
+
   name = "vault"
   operator_deployer {
-    cluster_id      = securecn_k8s_cluster.local.id
+    cluster_id      = securecn_k8s_cluster.terraform.id
     service_account = "vault"
     namespace       = "default"
     rule_creation   = false
