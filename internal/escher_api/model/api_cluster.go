@@ -40,9 +40,6 @@ type KubernetesCluster struct {
 	// Required: true
 	EnableConnectionsControl *bool `json:"enableConnectionsControl"`
 
-	// indicates whether the Venafi integration is enabled
-	EnableVenafiIntegration *bool `json:"enableVenafiIntegration,omitempty"`
-
 	// external ca
 	ExternalCa *ExternalCaDetails `json:"externalCa,omitempty"`
 

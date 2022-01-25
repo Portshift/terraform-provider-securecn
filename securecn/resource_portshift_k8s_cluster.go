@@ -44,7 +44,6 @@ const ConnectionsControlFieldName = "connections_control"
 const IstioVersionFieldName = "istio_version"
 const IstioIngressEnabledFieldName = "istio_ingress_enabled"
 const IstioIngressAnnotationsFieldName = "istio_ingress_annotations"
-const EnableVenafiIntegrationFieldName = "venafi_integration"
 const EnableApiIntelligenceDASTFieldName = "api_intelligence_dast"
 const EnableAutoLabelFieldName = "auto_labeling"
 const HoldApplicationUntilProxyStartsFieldName = "hold_application_until_proxy_starts"
@@ -112,7 +111,6 @@ func ResourceCluster() *schema.Resource {
 					"GKE", "OPENSHIFT", "RANCHER", "AKS", "EKS", "KUBERNETES", "IKS",
 				}, true),
 			},
-			EnableVenafiIntegrationFieldName:         {Type: schema.TypeBool, Optional: true, Default: false, Description: "Enable Venafi integration"},
 			EnableApiIntelligenceDASTFieldName:       {Type: schema.TypeBool, Optional: true, Default: false, Description: "Enable API Intelligence DAST integration"},
 			EnableAutoLabelFieldName:                 {Type: schema.TypeBool, Optional: true, Default: false, Description: "Enable auto labeling of Kubernetes namespaces"},
 			HoldApplicationUntilProxyStartsFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the controller should hold the application until the proxy starts"},
@@ -502,7 +500,6 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		IsIstioAlreadyInstalled: &isIstioAlreadyInstalled,
 		IstioVersion:            istioVersion,
 	}
-	enableVenafiIntegration := d.Get(EnableVenafiIntegrationFieldName).(bool)
 	enableAPIIntelligenceDAST := d.Get(EnableApiIntelligenceDASTFieldName).(bool)
 	enableAutoLabel := d.Get(EnableAutoLabelFieldName).(bool)
 	holdApplicationUntilProxyStarts := d.Get(HoldApplicationUntilProxyStartsFieldName).(bool)
@@ -530,7 +527,6 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		PreserveOriginalSourceIP:          &inspectIncomingClusterConnections,
 		ProxyConfiguration:                proxyConfig,
 		OrchestrationType:                 &orchestrationType,
-		EnableVenafiIntegration:           &enableVenafiIntegration,
 		APIIntelligenceDAST:               &enableAPIIntelligenceDAST,
 		AutoLabelEnabled:                  &enableAutoLabel,
 		IsHoldApplicationUntilProxyStarts: &holdApplicationUntilProxyStarts,
