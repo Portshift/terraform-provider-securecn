@@ -28,7 +28,7 @@ go generate
 An acceptance test is running for all submitted PRs in the repository with GitHub Actions (`test.yml`).
 It is compiling the provider, setting up a [kind](https://kind.sigs.k8s.io/) cluster
 and performs the registration of this cluster in a separate account of the staging environment,
-see the [examples/main.tf] file for all the resources that are getting created during this test.
+see the [examples/main.tf](https://github.com/Portshift/terraform-provider-securecn/blob/main/examples/main.tf) file for all the resources that are getting created during this test.
 After a successful test the provider destroys these resources and cleans up the account.
 
 ### Releasing
