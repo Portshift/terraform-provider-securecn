@@ -210,7 +210,7 @@ func (o *PutKubernetesClustersKubernetesClusterIDParams) BindRequest(r *http.Req
 		var body KubernetesCluster
 		if err := route.Consumer.Consume(r.Body, &body); err != nil {
 			if err == io.EOF {
-				res = append(res, errors.Required("body", "body"))
+				res = append(res, errors.Required("body", "body", nil))
 			} else {
 				res = append(res, errors.NewParseError("body", "body", "", err))
 			}
@@ -225,7 +225,7 @@ func (o *PutKubernetesClustersKubernetesClusterIDParams) BindRequest(r *http.Req
 			}
 		}
 	} else {
-		res = append(res, errors.Required("body", "body"))
+		res = append(res, errors.Required("body", "body", nil))
 	}
 	rKubernetesClusterID, rhkKubernetesClusterID, _ := route.Params.GetOK("kubernetesClusterId")
 	if err := o.bindKubernetesClusterID(rKubernetesClusterID, rhkKubernetesClusterID, route.Formats); err != nil {
