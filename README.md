@@ -28,8 +28,9 @@ go generate
 An acceptance test is running for all submitted PRs in the repository with GitHub Actions (`test.yml`).
 It is compiling the provider, setting up a [kind](https://kind.sigs.k8s.io/) cluster
 and performs the registration of this cluster in a separate account of the staging environment,
-see the [examples/main.tf](https://github.com/Portshift/terraform-provider-securecn/blob/main/examples/main.tf) file for all the resources that are getting created during this test.
-After a successful test the provider destroys these resources and cleans up the account.
+see the [examples/main.tf](https://github.com/Portshift/terraform-provider-securecn/blob/main/examples/main.tf) file for all the resources that are getting created during this test. After a successful test the provider destroys these resources and cleans up the account.
+
+If the CI test fails because of Escher authentication errors, just try restarting the build (this happens time to time). The root cause of this is that Escher auth is a time based authentication method and the time on the management server and on GitHub Actions can differ.
 
 ### Releasing
 
