@@ -67,6 +67,8 @@ func installKubectlOnDemand() error {
 
 		_, err := os.Stat(kubectlPath)
 		if err != nil {
+			log.Print("[DEBUG] kubectl not available, grabbing it")
+
 			err = os.MkdirAll(kubectlDir, 0755)
 			if err != nil {
 				return err
@@ -74,6 +76,11 @@ func installKubectlOnDemand() error {
 
 			kubectlURL := fmt.Sprintf("https://dl.k8s.io/release/v1.23.0/bin/%s/%s/kubectl", runtime.GOOS, runtime.GOARCH)
 			err = downloadFile(kubectlPath, kubectlURL)
+			if err != nil {
+				return err
+			}
+
+			err = os.Chmod(kubectlPath, 0755)
 			if err != nil {
 				return err
 			}
