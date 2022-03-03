@@ -66,6 +66,7 @@ jobs:
         kind create cluster --config .kind.yml --wait 5m
         kubectl describe nodes
         kubectl apply -f https://raw.githubusercontent.com/banzaicloud/bank-vaults/master/operator/deploy/rbac.yaml
+        sudo rm $(which kubectl)        
 
     - name: TF acceptance tests
       timeout-minutes: 10
@@ -91,6 +92,6 @@ jobs:
         SECURECN_SECRET_KEY: ${{ secrets.SECURECN_SECRET_KEY }}
         SECURECN_SERVER_URL: ${{ secrets.SECURECN_SERVER_URL }}
       run: |
-        kubectl get pods --all-namespaces
-        kubectl describe pod -n portshift -l app=portshift-agent
+#        kubectl get pods --all-namespaces
+#        kubectl describe pod -n portshift -l app=portshift-agent
         terraform destroy --auto-approve
