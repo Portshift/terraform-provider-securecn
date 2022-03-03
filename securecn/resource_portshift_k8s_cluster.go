@@ -431,7 +431,7 @@ func createTempKubeconfig(context string) (string, error) {
 
 func downloadAndExtractBundle(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID) error {
 	log.Print("[DEBUG] downloading and extracting bundle")
-	err := downloadFile(ctx, serviceApi, httpClientWrapper.HttpClient, clusterId)
+	err := downloadInstallBundle(ctx, serviceApi, httpClientWrapper.HttpClient, clusterId)
 	if err != nil {
 		return err
 	}
@@ -571,7 +571,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	return cluster, nil
 }
 
-func downloadFile(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, client *http.Client, clusterId strfmt.UUID) error {
+func downloadInstallBundle(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, client *http.Client, clusterId strfmt.UUID) error {
 	log.Print("[DEBUG] downloading file")
 
 	file, err := os.Create(secureCNBundleFilePath)
