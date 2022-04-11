@@ -192,7 +192,7 @@ func ResourceCluster() *schema.Resource {
 				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
 					minReplicas := val.(int)
 					if minReplicas < 1 || minReplicas > 5 {
-						errs = append(errs, fmt.Errorf(" %s should be betwee 1 and 5 (inclusive)", MinimumReplicasFieldName))
+						errs = append(errs, fmt.Errorf("%s should be between 1 and 5 (inclusive)", MinimumReplicasFieldName))
 					}
 					return
 				},
