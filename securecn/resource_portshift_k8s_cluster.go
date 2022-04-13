@@ -482,6 +482,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	persistentStorage := d.Get(PersistentStorageFieldName).(bool)
 	externalHttpsProxy := d.Get(ExternalHttpsProxyFieldName).(string)
 	orchestrationType := d.Get(OrchestrationTypeFieldName).(string)
+	minimumReplicas := d.Get(MinimumReplicasFieldName).(int32)
 
 	isIstioAlreadyInstalled := istioVersion != ""
 	enableProxy := externalHttpsProxy != ""
@@ -531,6 +532,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		ServiceDiscoveryIsolationEnabled:  &enableServiceDiscoveryIsolation,
 		TLSInspectionEnabled:              &enableTLSInspection,
 		TokenInjectionEnabled:             &enableTokenInjection,
+		MinimalNumberOfControllerReplicas: minimumReplicas,
 	}
 
 	if installTracingSupport {
