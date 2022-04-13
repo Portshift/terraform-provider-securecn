@@ -104,7 +104,7 @@ type KubernetesCluster struct {
 	TracingSupportSettings *TracingSupportSettings `json:"tracingSupportSettings,omitempty"`
 
 	// minimum number of controller replicas"
-	MinimalNumberOfControllerReplicas int32 `json:"minimalNumberOfControllerReplicas,omitempty"`
+	MinimalNumberOfControllerReplicas int `json:"minimalNumberOfControllerReplicas,omitempty"`
 }
 
 // Validate validates this kubernetes cluster

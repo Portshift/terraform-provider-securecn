@@ -482,7 +482,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	persistentStorage := d.Get(PersistentStorageFieldName).(bool)
 	externalHttpsProxy := d.Get(ExternalHttpsProxyFieldName).(string)
 	orchestrationType := d.Get(OrchestrationTypeFieldName).(string)
-	minimumReplicas := d.Get(MinimumReplicasFieldName).(int32)
+	minimumReplicas := d.Get(MinimumReplicasFieldName).(int)
 
 	isIstioAlreadyInstalled := istioVersion != ""
 	enableProxy := externalHttpsProxy != ""
