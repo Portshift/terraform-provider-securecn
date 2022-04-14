@@ -102,6 +102,9 @@ type KubernetesCluster struct {
 
 	// tracing support configuration. enabled for ApiSecurity enabled accounts
 	TracingSupportSettings *TracingSupportSettings `json:"tracingSupportSettings,omitempty"`
+
+	// minimum number of controller replicas"
+	MinimalNumberOfControllerReplicas int `json:"minimalNumberOfControllerReplicas,omitempty"`
 }
 
 // Validate validates this kubernetes cluster

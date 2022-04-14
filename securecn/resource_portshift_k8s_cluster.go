@@ -62,6 +62,7 @@ const FailCloseFieldName = "fail_close"
 const PersistentStorageFieldName = "persistent_storage"
 const ExternalHttpsProxyFieldName = "external_https_proxy"
 const OrchestrationTypeFieldName = "orchestration_type"
+const MinimumReplicasFieldName = "minimum_replicas"
 
 func ResourceCluster() *schema.Resource {
 	return &schema.Resource{
@@ -185,6 +186,15 @@ func ResourceCluster() *schema.Resource {
 							Optional: true,
 						},
 					},
+				},
+			},
+			MinimumReplicasFieldName: {Type: schema.TypeInt, Optional: true, Default: 1, Description: "minimum number of controller replicas",
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					minReplicas := val.(int)
+					if minReplicas < 1 || minReplicas > 5 {
+						errs = append(errs, fmt.Errorf("%s should be between 1 and 5 (inclusive)", MinimumReplicasFieldName))
+					}
+					return
 				},
 			},
 		},
@@ -472,6 +482,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	persistentStorage := d.Get(PersistentStorageFieldName).(bool)
 	externalHttpsProxy := d.Get(ExternalHttpsProxyFieldName).(string)
 	orchestrationType := d.Get(OrchestrationTypeFieldName).(string)
+	minimumReplicas := d.Get(MinimumReplicasFieldName).(int)
 
 	isIstioAlreadyInstalled := istioVersion != ""
 	enableProxy := externalHttpsProxy != ""
@@ -521,6 +532,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		ServiceDiscoveryIsolationEnabled:  &enableServiceDiscoveryIsolation,
 		TLSInspectionEnabled:              &enableTLSInspection,
 		TokenInjectionEnabled:             &enableTokenInjection,
+		MinimalNumberOfControllerReplicas: minimumReplicas,
 	}
 
 	if installTracingSupport {

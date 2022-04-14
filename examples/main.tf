@@ -11,6 +11,7 @@ resource "securecn_k8s_cluster" "terraform" {
   name                       = "terraform"
   kubernetes_cluster_context = "kind-kind"
   orchestration_type         = "KUBERNETES"
+  minimum_replicas           = 4
 }
 
 resource "securecn_environment" "env1" {

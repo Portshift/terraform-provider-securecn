@@ -115,13 +115,13 @@ func Provider() plugin.ProviderFunc {
 					Required:    true,
 					Sensitive:   true,
 					DefaultFunc: schema.EnvDefaultFunc("SECURECN_SECRET_KEY", os.Getenv("SECURECN_SECRET_KEY")),
-					Description: "SecureCN service account secret key to authenticate with",
+					Description: "Appsecurity service account secret key to authenticate with",
 				},
 				ServerUrlFieldName: {
 					Type:        schema.TypeString,
 					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("SECURECN_SERVER_URL", "securecn.cisco.com"),
-					Description: "SecureCN server URL",
+					DefaultFunc: schema.EnvDefaultFunc("SECURECN_SERVER_URL", "appsecurity.cisco.com"),
+					Description: "Appsecurity server URL",
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
