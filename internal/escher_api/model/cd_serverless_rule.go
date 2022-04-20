@@ -41,9 +41,6 @@ type CdServerlessRule struct {
 
 	ruleField ServerlessRuleType
 
-	// rule origin
-	RuleOrigin *ServerlessRuleOrigin `json:"ruleOrigin,omitempty"`
-
 	// scope
 	Scope []*ServerlessRuleScope `json:"scope"`
 
@@ -111,9 +108,6 @@ func (m *CdServerlessRule) UnmarshalJSON(raw []byte) error {
 	// rule
 	result.ruleField = propRule
 
-	// ruleOrigin
-	result.RuleOrigin = data.RuleOrigin
-
 	// scope
 	result.Scope = data.Scope
 
@@ -153,8 +147,6 @@ func (m CdServerlessRule) MarshalJSON() ([]byte, error) {
 
 		Name: m.Name,
 
-		RuleOrigin: m.RuleOrigin,
-
 		Scope: m.Scope,
 
 		Status: m.Status,
@@ -192,10 +184,6 @@ func (m *CdServerlessRule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateRule(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateRuleOrigin(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -272,23 +260,6 @@ func (m *CdServerlessRule) validateRule(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *CdServerlessRule) validateRuleOrigin(formats strfmt.Registry) error {
-	if swag.IsZero(m.RuleOrigin) { // not required
-		return nil
-	}
-
-	if m.RuleOrigin != nil {
-		if err := m.RuleOrigin.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("ruleOrigin")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (m *CdServerlessRule) validateScope(formats strfmt.Registry) error {
 	if swag.IsZero(m.Scope) { // not required
 		return nil
@@ -347,10 +318,6 @@ func (m *CdServerlessRule) ContextValidate(ctx context.Context, formats strfmt.R
 		res = append(res, err)
 	}
 
-	if err := m.contextValidateRuleOrigin(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.contextValidateScope(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -386,20 +353,6 @@ func (m *CdServerlessRule) contextValidateRule(ctx context.Context, formats strf
 			return ve.ValidateName("rule")
 		}
 		return err
-	}
-
-	return nil
-}
-
-func (m *CdServerlessRule) contextValidateRuleOrigin(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.RuleOrigin != nil {
-		if err := m.RuleOrigin.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("ruleOrigin")
-			}
-			return err
-		}
 	}
 
 	return nil
