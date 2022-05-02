@@ -23,7 +23,7 @@ const DeploymentRuleResourceName = "securecn_deployment_rule"
 const DeployerResourceName = "securecn_deployer"
 const CiPolicyResourceName = "securecn_ci_policy"
 const CdPolicyResourceName = "securecn_cd_policy"
-const ServerlessPolicyResourceName = "securecn_serverless_policy"
+const ServerlessRuleResourceName = "securecn_serverless_rule"
 const AccessKeyFieldName = "access_key"
 const SecretKeyFieldName = "secret_key"
 const ServerUrlFieldName = "server_url"
@@ -126,14 +126,14 @@ func Provider() plugin.ProviderFunc {
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				ClusterResourceName:          ResourceCluster(),
-				ConnectionRuleResourceName:   ResourceConnectionRule(),
-				EnvironmentResourceName:      ResourceEnvironment(),
-				DeploymentRuleResourceName:   ResourceDeploymentRule(),
-				DeployerResourceName:         ResourceDeployer(),
-				CiPolicyResourceName:         ResourceCiPolicy(),
-				CdPolicyResourceName:         ResourceCdPolicy(),
-				ServerlessPolicyResourceName: ResourceServerlessRule(),
+				ClusterResourceName:        ResourceCluster(),
+				ConnectionRuleResourceName: ResourceConnectionRule(),
+				EnvironmentResourceName:    ResourceEnvironment(),
+				DeploymentRuleResourceName: ResourceDeploymentRule(),
+				DeployerResourceName:       ResourceDeployer(),
+				CiPolicyResourceName:       ResourceCiPolicy(),
+				CdPolicyResourceName:       ResourceCdPolicy(),
+				ServerlessRuleResourceName: ResourceServerlessRule(),
 			},
 			ConfigureContextFunc: configureProviderClient,
 		}
