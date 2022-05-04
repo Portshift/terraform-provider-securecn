@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 func ExtractTarGz(gzipStream io.Reader) error {
@@ -40,8 +41,18 @@ func ExtractTarGz(gzipStream io.Reader) error {
 		case tar.TypeReg:
 			outFile, err := os.Create(header.Name)
 			if err != nil {
-				//log.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
-				return errors.New("ExtractTarGz: NewReader failed")
+				// We were unable to create the file because there was no
+				// Tar Directory entry coresponding to this file's directory.
+				// Let's try to create the directory and try again.
+				if err = os.MkdirAll(filepath.Dir(header.Name), 0755); err != nil {
+					// log.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
+					return errors.New("ExtractTarGz: NewReader failed")
+				}
+				outFile, err = os.Create(header.Name)
+				if err != nil {
+					// log.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
+					return errors.New("ExtractTarGz: NewReader failed")
+				}
 
 			}
 			defer outFile.Close()
