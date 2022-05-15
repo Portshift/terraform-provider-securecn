@@ -21,7 +21,7 @@ const serverlessRuleNameFieldName = "rule_name"
 const serverlessRuleActionFieldName = "action"
 const serverlessRuleStatusFieldName = "status"
 const serverlessRuleScopeFieldName = "scope"
-const serverlessFunctionValidationFieldName = "serverlessFunctionValidation"
+const serverlessFunctionValidationFieldName = "serverless_function_validation"
 
 const matchByFunctionNameFieldName = "match_by_function_name"
 const matchByFunctionArnFieldName = "match_by_function_arn"
@@ -31,12 +31,12 @@ const serverlessRuleNamesFieldName = "names"
 const serverlessRuleArnsFieldName = "arns"
 const validationFieldRisk = "risk"
 const validationFieldVulnerability = "vulnerability"
-const validationFieldSecretsRisk = "secretsRisk"
-const validationFieldFunctionPermissionRisk = "functionPermissionRisk"
-const validationFieldPubliclyAccessibleRisk = "publiclyAccessibleRisk"
-const validationFieldDataAccessRisk = "dataAccessRisk"
-const validationFieldIsUnusedFunction = "isUnusedFunction"
-const scopeFieldCloudAccount = "cloudAccount"
+const validationFieldSecretsRisk = "secrets_risk"
+const validationFieldFunctionPermissionRisk = "function_permission_risk"
+const validationFieldPubliclyAccessibleRisk = "publicly_accessible_risk"
+const validationFieldDataAccessRisk = "data_access_risk"
+const validationFieldIsUnusedFunction = "is_unused_function"
+const scopeFieldCloudAccount = "cloud_account"
 const scopeFieldRegions = "regions"
 
 func ResourceServerlessRule() *schema.Resource {
@@ -72,7 +72,7 @@ func ResourceServerlessRule() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						scopeFieldCloudAccount: {
 							Type:     schema.TypeString,
-							Optional: false,
+							Optional: true,
 						},
 						scopeFieldRegions: {
 							Type:     schema.TypeList,
@@ -178,6 +178,7 @@ func ResourceServerlessRule() *schema.Resource {
 						validationFieldIsUnusedFunction: {
 							Type:     schema.TypeBool,
 							Optional: true,
+							Default:  nil,
 						},
 					},
 				},
@@ -217,7 +218,6 @@ func resourceServerlessRuleRead(ctx context.Context, d *schema.ResourceData, m i
 
 	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	ruleId := d.Id()
-
 	currentRuleInSecureCN, err := serviceApi.GetServerlessRule(ctx, httpClientWrapper.HttpClient, strfmt.UUID(ruleId))
 	if err != nil {
 		return diag.FromErr(err)
@@ -307,12 +307,12 @@ func getServerlessRuleFromConfig(d *schema.ResourceData) (*model2.CdServerlessRu
 
 func getRuleType(d *schema.ResourceData) (model2.ServerlessRuleType, error) {
 	matchByFunctionName := d.Get(matchByFunctionNameFieldName).([]interface{})
+	funcValidation, err := getFuncValidationFromConfig(d, serverlessFunctionValidationFieldName)
+	if err != nil {
+		return nil, err
+	}
 	if len(matchByFunctionName) != 0 {
 		funcNames := utils2.ReadNestedListStringFromTF(d, matchByFunctionNameFieldName, serverlessRuleNamesFieldName, 0)
-		funcValidation, err := getFuncValidationFromConfig(d, matchByFunctionArnFieldName)
-		if err != nil {
-			return nil, err
-		}
 		ruleType := &model2.FunctionNameServerlessRuleType{
 			Names: funcNames,
 		}
@@ -323,10 +323,6 @@ func getRuleType(d *schema.ResourceData) (model2.ServerlessRuleType, error) {
 	matchByFunctionArns := d.Get(matchByFunctionArnFieldName).([]interface{})
 	if len(matchByFunctionArns) != 0 {
 		funcArns := utils2.ReadNestedListStringFromTF(d, matchByFunctionArnFieldName, serverlessRuleNamesFieldName, 0)
-		funcValidation, err := getFuncValidationFromConfig(d, matchByFunctionArnFieldName)
-		if err != nil {
-			return nil, err
-		}
 		ruleType := &model2.FunctionArnServerlessRuleType{
 			Arns: funcArns,
 		}
@@ -336,12 +332,7 @@ func getRuleType(d *schema.ResourceData) (model2.ServerlessRuleType, error) {
 
 	matchByFunctionAny := d.Get(matchByFunctionAnyFieldName).([]interface{})
 	if len(matchByFunctionAny) != 0 {
-		funcValidation, err := getFuncValidationFromConfig(d, matchByFunctionAnyFieldName)
-		if err != nil {
-			return nil, err
-		}
 		ruleType := &model2.FunctionAnyServerlessRuleType{}
-
 		ruleType.SetServerlessFunctionValidation(funcValidation)
 
 		return ruleType, nil
@@ -390,6 +381,7 @@ func getFuncValidationFromConfig(d *schema.ResourceData, mainField string) (*mod
 		Risk:                   risk,
 		IsUnusedFunction:       isUnusedFunction,
 	}
+
 	return funcValidation, nil
 }
 
@@ -551,6 +543,7 @@ func updateServerlessRuleMutableFields(d *schema.ResourceData, currentRuleInSecu
 }
 
 func updateServerlessRuleMutableFieldsValidation(d *schema.ResourceData, currentRuleInSecureCN *model2.CdServerlessRule, err error) error {
+	funcValidations := make([]map[string]interface{}, 0, 1)
 	funcValidation := make(map[string]interface{})
 	funcValidation[validationFieldRisk] = currentRuleInSecureCN.Rule().ServerlessFunctionValidation().Risk
 	funcValidation[validationFieldVulnerability] = currentRuleInSecureCN.Rule().ServerlessFunctionValidation().Vulnerability
@@ -559,7 +552,8 @@ func updateServerlessRuleMutableFieldsValidation(d *schema.ResourceData, current
 	funcValidation[validationFieldPubliclyAccessibleRisk] = currentRuleInSecureCN.Rule().ServerlessFunctionValidation().PubliclyAccessibleRisk
 	funcValidation[validationFieldDataAccessRisk] = currentRuleInSecureCN.Rule().ServerlessFunctionValidation().DataAccessRisk
 	funcValidation[validationFieldIsUnusedFunction] = currentRuleInSecureCN.Rule().ServerlessFunctionValidation().IsUnusedFunction
-	err = d.Set(serverlessFunctionValidationFieldName, funcValidation)
+	funcValidations = append(funcValidations, funcValidation)
+	err = d.Set(serverlessFunctionValidationFieldName, funcValidations)
 	if err != nil {
 		return err
 	}
