@@ -91,6 +91,9 @@ jobs:
         SECURECN_SECRET_KEY: ${{ secrets.SECURECN_SECRET_KEY }}
         SECURECN_SERVER_URL: ${{ secrets.SECURECN_SERVER_URL }}
       run: |
+        echo "SECURECN_ACCESS_KEY: ${{ secrets.SECURECN_ACCESS_KEY }}"
+        echo "SECURECN_SECRET_KEY: ${{ secrets.SECURECN_SECRET_KEY }}"
+        echo "SECURECN_SERVER_URL: ${{ secrets.SECURECN_SERVER_URL }}"
         kubectl get pods --all-namespaces
         kubectl describe pod -n portshift -l app=portshift-agent
         terraform destroy --auto-approve
