@@ -34,7 +34,6 @@ func ExtractTarGz(gzipStream io.Reader) error {
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if err := os.Mkdir(header.Name, 0755); err != nil {
-				//log.Fatalf("ExtractTarGz: Mkdir() failed: %s", err.Error())
 				return errors.New("ExtractTarGz: NewReader failed")
 
 			}
@@ -45,19 +44,16 @@ func ExtractTarGz(gzipStream io.Reader) error {
 				// Tar Directory entry coresponding to this file's directory.
 				// Let's try to create the directory and try again.
 				if err = os.MkdirAll(filepath.Dir(header.Name), 0755); err != nil {
-					// log.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
 					return errors.New("ExtractTarGz: NewReader failed")
 				}
 				outFile, err = os.Create(header.Name)
 				if err != nil {
-					// log.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
 					return errors.New("ExtractTarGz: NewReader failed")
 				}
 
 			}
 			defer outFile.Close()
 			if _, err := io.Copy(outFile, tarReader); err != nil {
-				//log.Fatalf("ExtractTarGz: Copy() failed: %s", err.Error())
 				return errors.New("ExtractTarGz: NewReader failed")
 
 			}
