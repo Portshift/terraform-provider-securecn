@@ -182,6 +182,25 @@ func (serviceMgmtApi *MgmtServiceApiCtx) CreateDeploymentRule(ctx context.Contex
 	return newRule, nil
 }
 
+func (serviceMgmtApi *MgmtServiceApiCtx) CreateServerlessRule(ctx context.Context, client *http.Client, rule *model.CdServerlessRule) (*model.PostCdServerlessRuleCreated, error) {
+	log.Print("[DEBUG] serverless rule")
+
+	params := &model.PostCdServerlessRuleParams{
+		Body:       rule,
+		Context:    ctx,
+		HTTPClient: client,
+	}
+
+	newRule, err := serviceMgmtApi.PostCdServerlessRule(params)
+
+	if err != nil {
+		log.Printf("[DEBUG] failed creating serverless rule %v", err)
+		return nil, err
+	}
+
+	return newRule, nil
+}
+
 func (serviceMgmtApi *MgmtServiceApiCtx) GetKubernetesClusterById(ctx context.Context, client *http.Client, clusterId strfmt.UUID) (*model.GetKubernetesClustersKubernetesClusterIDOK, error) {
 	log.Print("[DEBUG] getting cluster")
 
@@ -303,6 +322,23 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetDeploymentRule(ctx context.Context, 
 	return rule, nil
 }
 
+func (serviceMgmtApi *MgmtServiceApiCtx) GetServerlessRule(ctx context.Context, client *http.Client, ruleId strfmt.UUID) (*model.GetCdRuleIDServerlessRuleOK, error) {
+	log.Print("[DEBUG] getting serverless rule")
+
+	params := &model.GetCdRuleIDServerlessRuleParams{
+		RuleID:     ruleId,
+		Context:    ctx,
+		HTTPClient: client,
+	}
+	rule, err := serviceMgmtApi.GetCdRuleIDServerlessRule(params)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rule. id: %v, : %v", ruleId, err)
+	}
+
+	return rule, nil
+}
+
 func (serviceMgmtApi *MgmtServiceApiCtx) UpdateKubernetesCluster(ctx context.Context, client *http.Client, cluster *model.KubernetesCluster, clusterId strfmt.UUID) (*model.PutKubernetesClustersKubernetesClusterIDOK, error) {
 	log.Print("[DEBUG] updating cluster")
 
@@ -379,6 +415,25 @@ func (serviceMgmtApi *MgmtServiceApiCtx) UpdateDeploymentRule(ctx context.Contex
 	return updatedRule, nil
 }
 
+func (serviceMgmtApi *MgmtServiceApiCtx) UpdateServerlessRule(ctx context.Context, client *http.Client, rule *model.CdServerlessRule, ruleId strfmt.UUID) (*model.PutCdRuleIDServerlessRuleOK, error) {
+	log.Print("[DEBUG] updating serverless rule")
+
+	params := &model.PutCdRuleIDServerlessRuleParams{
+		Body:       rule,
+		RuleID:     ruleId,
+		Context:    ctx,
+		HTTPClient: client,
+	}
+
+	updatedRule, err := serviceMgmtApi.PutCdRuleIDServerlessRule(params)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to update serverless rule: %v", err)
+	}
+
+	return updatedRule, nil
+}
+
 func (serviceMgmtApi *MgmtServiceApiCtx) DeleteKubernetesCluster(ctx context.Context, client *http.Client, clusterId strfmt.UUID) error {
 	log.Print("[DEBUG] deleting cluster")
 
@@ -441,6 +496,23 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DeleteDeploymentRule(ctx context.Contex
 
 	if err != nil {
 		return fmt.Errorf("failed to delete cd deployment rule: %v", err)
+	}
+
+	return nil
+}
+
+func (serviceMgmtApi *MgmtServiceApiCtx) DeleteServerlessRule(ctx context.Context, client *http.Client, ruleId strfmt.UUID) error {
+	log.Print("[DEBUG] deleting serverless rule")
+
+	params := &model.DeleteCdRuleIDServerlessRuleParams{
+		RuleID:     ruleId,
+		Context:    ctx,
+		HTTPClient: client,
+	}
+	_, err := serviceMgmtApi.DeleteCdRuleIDServerlessRule(params)
+
+	if err != nil {
+		return fmt.Errorf("failed to delete cd serverless rule: %v", err)
 	}
 
 	return nil
@@ -1576,4 +1648,147 @@ func (serviceMgmtApi *MgmtServiceApiCtx) PutCiPolicyPolicyID(params *model.PutCi
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for PutCiPolicyPolicyID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	return nil, runtime.NewAPIError("put ci policy", msg, 400)
+}
+
+/*
+  DeleteCdRuleIDServerlessRule deletes a cd serverless rule
+*/
+func (serviceMgmtApi *MgmtServiceApiCtx) DeleteCdRuleIDServerlessRule(params *model.DeleteCdRuleIDServerlessRuleParams) (*model.DeleteCdRuleIDServerlessRuleNoContent, error) {
+	registry := new(strfmt.Registry)
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = model.NewDeleteCdRuleIDServerlessRuleParams()
+	}
+	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
+		ID:                 "DeleteCdRuleIDServerlessRule",
+		Method:             "DELETE",
+		PathPattern:        "/cd/{ruleId}/serverlessRule",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		AuthInfo:           serviceMgmtApi.auth,
+		Params:             params,
+		Reader:             &model.DeleteCdRuleIDServerlessRuleReader{Formats: *registry},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*model.DeleteCdRuleIDServerlessRuleNoContent)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for DeleteCdRuleIDServerlessRule: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  GetCdRuleIDServerlessRule gets a cd serverless rule
+*/
+func (serviceMgmtApi *MgmtServiceApiCtx) GetCdRuleIDServerlessRule(params *model.GetCdRuleIDServerlessRuleParams) (*model.GetCdRuleIDServerlessRuleOK, error) {
+	registry := new(strfmt.Registry)
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = model.NewGetCdRuleIDServerlessRuleParams()
+	}
+	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
+		ID:                 "GetCdRuleIDServerlessRule",
+		Method:             "GET",
+		PathPattern:        "/cd/{ruleId}/serverlessRule",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &model.GetCdRuleIDServerlessRuleReader{Formats: *registry},
+		AuthInfo:           serviceMgmtApi.auth,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*model.GetCdRuleIDServerlessRuleOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetCdRuleIDServerlessRule: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  PostCdServerlessRule adds cd serverless rule
+*/
+func (serviceMgmtApi *MgmtServiceApiCtx) PostCdServerlessRule(params *model.PostCdServerlessRuleParams) (*model.PostCdServerlessRuleCreated, error) {
+	registry := new(strfmt.Registry)
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = model.NewPostCdServerlessRuleParams()
+	}
+	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
+		ID:                 "PostCdServerlessRule",
+		Method:             "POST",
+		PathPattern:        "/cd/serverlessRule",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &model.PostCdServerlessRuleReader{Formats: *registry},
+		AuthInfo:           serviceMgmtApi.auth,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*model.PostCdServerlessRuleCreated)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for PostCdServerlessRule: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  PutCdRuleIDServerlessRule updates a cd serverless rule
+*/
+func (serviceMgmtApi *MgmtServiceApiCtx) PutCdRuleIDServerlessRule(params *model.PutCdRuleIDServerlessRuleParams) (*model.PutCdRuleIDServerlessRuleOK, error) {
+	registry := new(strfmt.Registry)
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = model.NewPutCdRuleIDServerlessRuleParams()
+	}
+	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
+		ID:                 "PutCdRuleIDServerlessRule",
+		Method:             "PUT",
+		PathPattern:        "/cd/{ruleId}/serverlessRule",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &model.PutCdRuleIDServerlessRuleReader{Formats: *registry},
+		AuthInfo:           serviceMgmtApi.auth,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*model.PutCdRuleIDServerlessRuleOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for PutCdRuleIDServerlessRule: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
