@@ -12,6 +12,9 @@ resource "securecn_k8s_cluster" "terraform" {
   kubernetes_cluster_context = "kind-kind"
   orchestration_type         = "KUBERNETES"
   minimum_replicas           = 4
+  spec_reconstruction                  = true
+  trace_analyzer                       = true
+  tracing_support                      = true
 }
 
 resource "securecn_environment" "env1" {
