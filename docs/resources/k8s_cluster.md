@@ -37,6 +37,7 @@ A SecureCN k8s cluster
 - **istio_ingress_annotations** (Map of String) If enabling Istio ingress, use Istio these ingress annotation
 - **istio_ingress_enabled** (Boolean) If installing Istio, use Istio ingress
 - **istio_version** (String) When installing SecureCN agent deployment, use the already existing Istio deployment
+- **minimum_replicas** (Number) Number of replicas of the `portshift-agent` to install in the cluster.
 - **multi_cluster_communication_support** (Boolean) Enable multi cluster communication
 - **multi_cluster_communication_support_certs_path** (String) Multi cluster certs path. Only valid if multi_cluster_communication_support is true
 - **orchestration_type** (String) Orchestration type of the kubernetes cluster
