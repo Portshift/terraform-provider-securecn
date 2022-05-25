@@ -24,6 +24,7 @@ const DeployerResourceName = "securecn_deployer"
 const CiPolicyResourceName = "securecn_ci_policy"
 const CdPolicyResourceName = "securecn_cd_policy"
 const ServerlessRuleResourceName = "securecn_serverless_rule"
+const TrustedSignerResourceName = "securecn_trusted_signer"
 const AccessKeyFieldName = "access_key"
 const SecretKeyFieldName = "secret_key"
 const ServerUrlFieldName = "server_url"
@@ -134,6 +135,7 @@ func Provider() plugin.ProviderFunc {
 				CiPolicyResourceName:       ResourceCiPolicy(),
 				CdPolicyResourceName:       ResourceCdPolicy(),
 				ServerlessRuleResourceName: ResourceServerlessRule(),
+				TrustedSignerResourceName:  ResourceTrustedSigner(),
 			},
 			ConfigureContextFunc: configureProviderClient,
 		}

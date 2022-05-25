@@ -218,6 +218,23 @@ func (serviceMgmtApi *MgmtServiceApiCtx) GetKubernetesClusterById(ctx context.Co
 	return cluster, nil
 }
 
+func (serviceMgmtApi *MgmtServiceApiCtx) GetTrustedSignerById(ctx context.Context, client *http.Client, signerId strfmt.UUID) (*model.GetTrustedSignersTrustedSignerIDOK, error) {
+	log.Print("[DEBUG] getting cluster")
+
+	params := &model.GetTrustedSignersTrustedSignerIDParams{
+		TrustedSignerID: signerId,
+		Context:         ctx,
+		HTTPClient:      client,
+	}
+	signer, err := serviceMgmtApi.getTrustedSignerByID(params)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get trusted signer with id %v: %v", signerId, err)
+	}
+
+	return signer, nil
+}
+
 func (serviceMgmtApi *MgmtServiceApiCtx) GetKubernetesClusterIdByName(ctx context.Context, client *http.Client, kubernetesClusterName string) (*model.GetKubernetesClustersKubernetesClusterNameOK, error) {
 	log.Print("[DEBUG] getting cluster")
 
@@ -609,6 +626,34 @@ func (serviceMgmtApi *MgmtServiceApiCtx) getKubernetesClustersKubernetesClusterI
 		return nil, err
 	}
 	success, ok := result.(*model.GetKubernetesClustersKubernetesClusterIDOK)
+	if ok {
+		return success, nil
+	}
+
+	// unexpected success response
+	unexpectedSuccess := result.(*model.GetKubernetesClustersKubernetesClusterIDDefault)
+	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
+}
+
+func (serviceMgmtApi *MgmtServiceApiCtx) getTrustedSignerByID(params *model.GetTrustedSignersTrustedSignerIDParams) (*model.GetTrustedSignersTrustedSignerIDOK, error) {
+	registry := new(strfmt.Registry)
+	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
+		ID:                 "getTrustedSignerByID",
+		Method:             "GET",
+		PathPattern:        "/trustedSigners/{trustedSignerId}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &model.GetTrustedSignersTrustedSignerIDReader{Formats: *registry},
+		AuthInfo:           serviceMgmtApi.auth,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*model.GetTrustedSignersTrustedSignerIDOK)
 	if ok {
 		return success, nil
 	}
@@ -1686,6 +1731,41 @@ func (serviceMgmtApi *MgmtServiceApiCtx) DeleteCdRuleIDServerlessRule(params *mo
 }
 
 /*
+  DeleteCdRuleIDServerlessRule deletes a cd serverless rule
+*/
+func (serviceMgmtApi *MgmtServiceApiCtx) deleteTrustedSignerIDTrustedSigner(params *model.DeleteTrustedSignersTrustedSignerIDParams) (*model.DeleteTrustedSignersTrustedSignerIDNoContent, error) {
+	registry := new(strfmt.Registry)
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = model.NewDeleteTrustedSignersTrustedSignerIDParams()
+	}
+	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
+		ID:                 "deleteTrustedSignerIDTrustedSigner",
+		Method:             "DELETE",
+		PathPattern:        "/trustedSigners/{trustedSignerId}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		AuthInfo:           serviceMgmtApi.auth,
+		Params:             params,
+		Reader:             &model.DeleteTrustedSignersTrustedSignerIDReader{Formats: *registry},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*model.DeleteTrustedSignersTrustedSignerIDNoContent)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for deleteTrustedSignerIDTrustedSigner: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
   GetCdRuleIDServerlessRule gets a cd serverless rule
 */
 func (serviceMgmtApi *MgmtServiceApiCtx) GetCdRuleIDServerlessRule(params *model.GetCdRuleIDServerlessRuleParams) (*model.GetCdRuleIDServerlessRuleOK, error) {
@@ -1758,6 +1838,41 @@ func (serviceMgmtApi *MgmtServiceApiCtx) PostCdServerlessRule(params *model.Post
 }
 
 /*
+  postTrustedSigner adds a trusted signer
+*/
+func (serviceMgmtApi *MgmtServiceApiCtx) postTrustedSigner(params *model.PostTrustedSignersParams) (*model.PostTrustedSignersCreated, error) {
+	registry := new(strfmt.Registry)
+	if params == nil {
+		params = model.NewPostTrustedSignersParams()
+	}
+	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
+		ID:                 "postTrustedSigner",
+		Method:             "POST",
+		PathPattern:        "/trustedSigners",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &model.PostTrustedSignersReader{Formats: *registry},
+		AuthInfo:           serviceMgmtApi.auth,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*model.PostTrustedSignersCreated)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for PostTrustedSignersCreated: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
   PutCdRuleIDServerlessRule updates a cd serverless rule
 */
 func (serviceMgmtApi *MgmtServiceApiCtx) PutCdRuleIDServerlessRule(params *model.PutCdRuleIDServerlessRuleParams) (*model.PutCdRuleIDServerlessRuleOK, error) {
@@ -1791,4 +1906,98 @@ func (serviceMgmtApi *MgmtServiceApiCtx) PutCdRuleIDServerlessRule(params *model
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for PutCdRuleIDServerlessRule: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
+}
+
+/*
+  UpdateTrustedSigner updates a trusted signer
+*/
+func (serviceMgmtApi *MgmtServiceApiCtx) UpdateTrustedSigner(ctx context.Context, client *http.Client, trustedSigner *model.TrustedSigner, trustedSignerID strfmt.UUID) (*model.PutTrustedSignersTrustedSignerIDCreated, error) {
+	log.Print("[DEBUG] updating trusted signer")
+
+	params := &model.PutTrustedSignersTrustedSignerIDParams{
+		Body:            trustedSigner,
+		TrustedSignerID: trustedSignerID,
+		Context:         ctx,
+		HTTPClient:      client,
+	}
+
+	updatedSigner, err := serviceMgmtApi.putTrustedSignerIDTrustedSigner(params)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to update serverless rule: %v", err)
+	}
+
+	return updatedSigner, nil
+}
+
+/*
+  UpdateTrustedSigner updates a trusted signer
+*/
+func (serviceMgmtApi *MgmtServiceApiCtx) DeleteTrustedSigner(ctx context.Context, client *http.Client, trustedSignerID strfmt.UUID) (*model.PutTrustedSignersTrustedSignerIDCreated, error) {
+	log.Print("[DEBUG] deleting trusted signer")
+
+	params := &model.DeleteTrustedSignersTrustedSignerIDParams{
+		TrustedSignerID: trustedSignerID,
+		Context:         ctx,
+		HTTPClient:      client,
+	}
+	_, err := serviceMgmtApi.deleteTrustedSignerIDTrustedSigner(params)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete trusted signer: %v", err)
+	}
+
+	return nil, nil
+}
+
+func (serviceMgmtApi *MgmtServiceApiCtx) putTrustedSignerIDTrustedSigner(params *model.PutTrustedSignersTrustedSignerIDParams) (*model.PutTrustedSignersTrustedSignerIDCreated, error) {
+	registry := new(strfmt.Registry)
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = model.NewPutTrustedSignersTrustedSignerIDParams()
+	}
+	result, err := serviceMgmtApi.runtime.Submit(&runtime.ClientOperation{
+		ID:                 "UpdateTrustedSigner",
+		Method:             "PUT",
+		PathPattern:        "/trustedSigners/{trustedSignerId}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &model.PutTrustedSignersTrustedSignerIDReader{Formats: *registry},
+		AuthInfo:           serviceMgmtApi.auth,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*model.PutTrustedSignersTrustedSignerIDCreated)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for UpdateTrustedSigner: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+func (serviceMgmtApi *MgmtServiceApiCtx) CreateTrustedSigner(ctx context.Context, client *http.Client, signer *model.TrustedSigner) (*model.PostTrustedSignersCreated, error) {
+	log.Print("[DEBUG] creating trusted signer")
+
+	params := &model.PostTrustedSignersParams{
+		Body:       signer,
+		Context:    ctx,
+		HTTPClient: client,
+	}
+
+	newRule, err := serviceMgmtApi.postTrustedSigner(params)
+
+	if err != nil {
+		log.Printf("[DEBUG] failed creating trusted signer %v", err)
+		return nil, err
+	}
+
+	return newRule, nil
 }
