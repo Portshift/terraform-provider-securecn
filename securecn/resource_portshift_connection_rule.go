@@ -42,6 +42,7 @@ const domainsFieldName = "domains"
 const connectionRuleNamesFieldName = "names"
 const connectionRuleNamesLabelsFieldName = "labels"
 const connectionRuleVulnerabilitySeverityFieldName = "vulnerability_severity_level"
+const connectionRuleEnvironmentFieldName = "environments"
 
 func ResourceConnectionRule() *schema.Resource {
 
@@ -135,6 +136,12 @@ func ResourceConnectionRule() *schema.Resource {
 								"UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL",
 							}, true),
 						},
+						connectionRuleEnvironmentFieldName: {
+							Type:     schema.TypeList,
+							MinItems: 1,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
 					},
 				},
 			},
@@ -161,6 +168,12 @@ func ResourceConnectionRule() *schema.Resource {
 								"UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL",
 							}, true),
 						},
+						connectionRuleEnvironmentFieldName: {
+							Type:     schema.TypeList,
+							MinItems: 1,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
 					},
 				},
 			},
@@ -179,6 +192,12 @@ func ResourceConnectionRule() *schema.Resource {
 							ValidateFunc: validation.StringInSlice([]string{
 								"UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL",
 							}, true),
+						},
+						connectionRuleEnvironmentFieldName: {
+							Type:     schema.TypeList,
+							MinItems: 1,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
 						},
 					},
 				},
@@ -255,6 +274,12 @@ func ResourceConnectionRule() *schema.Resource {
 								"UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL",
 							}, true),
 						},
+						connectionRuleEnvironmentFieldName: {
+							Type:     schema.TypeList,
+							MinItems: 1,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
 					},
 				},
 			},
@@ -281,6 +306,12 @@ func ResourceConnectionRule() *schema.Resource {
 								"UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL",
 							}, true),
 						},
+						connectionRuleEnvironmentFieldName: {
+							Type:     schema.TypeList,
+							MinItems: 1,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
 					},
 				},
 			},
@@ -299,6 +330,12 @@ func ResourceConnectionRule() *schema.Resource {
 							ValidateFunc: validation.StringInSlice([]string{
 								"UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL",
 							}, true),
+						},
+						connectionRuleEnvironmentFieldName: {
+							Type:     schema.TypeList,
+							MinItems: 1,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
 						},
 					},
 				},
@@ -511,8 +548,9 @@ func getSource(d *schema.ResourceData) (interface{}, error) {
 		return source, nil
 	} else if len(sourcePodNames) != 0 {
 		vulString := utils2.ReadNestedStringFromTF(d, sourcePodNameFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
+		envString := utils2.ReadNestedListStringFromTF(d, sourcePodNameFieldName, connectionRuleEnvironmentFieldName, 0)
 		source := &model2.PodNameConnectionRulePart{
-			Environments:               nil,
+			Environments:               envString,
 			Names:                      sourcePodNames,
 			VulnerabilitySeverityLevel: strings.ToUpper(vulString),
 		}
@@ -521,10 +559,11 @@ func getSource(d *schema.ResourceData) (interface{}, error) {
 
 	} else if len(sourcePodLabels) != 0 {
 		vulString := utils2.ReadNestedStringFromTF(d, sourcePodLabelFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
+		envString := utils2.ReadNestedListStringFromTF(d, sourcePodNameFieldName, connectionRuleEnvironmentFieldName, 0)
 		labels := utils2.GetLabelsFromMap(sourcePodLabels)
 
 		source := &model2.PodLablesConnectionRulePart{
-			Environments:               nil,
+			Environments:               envString,
 			Labels:                     labels,
 			VulnerabilitySeverityLevel: strings.ToUpper(vulString),
 		}
@@ -533,8 +572,9 @@ func getSource(d *schema.ResourceData) (interface{}, error) {
 
 	} else if sourcePodAny {
 		vulString := utils2.ReadNestedStringFromTF(d, sourcePodAnyFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
+		envString := utils2.ReadNestedListStringFromTF(d, sourcePodNameFieldName, connectionRuleEnvironmentFieldName, 0)
 		source := &model2.PodAnyConnectionRulePart{
-			Environments:               nil,
+			Environments:               envString,
 			VulnerabilitySeverityLevel: strings.ToUpper(vulString),
 		}
 
@@ -568,8 +608,10 @@ func getDestination(d *schema.ResourceData) (interface{}, error) {
 		return destination, nil
 	} else if len(destinationPodNames) != 0 {
 		vulString := utils2.ReadNestedStringFromTF(d, destinationPodNameFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
+		envString := utils2.ReadNestedListStringFromTF(d, sourcePodNameFieldName, connectionRuleEnvironmentFieldName, 0)
+
 		destination := &model2.PodNameConnectionRulePart{
-			Environments:               nil,
+			Environments:               envString,
 			Names:                      destinationPodNames,
 			VulnerabilitySeverityLevel: strings.ToUpper(vulString),
 		}
@@ -578,9 +620,11 @@ func getDestination(d *schema.ResourceData) (interface{}, error) {
 
 	} else if len(destinationPodLabels) != 0 {
 		vulString := utils2.ReadNestedStringFromTF(d, destinationPodLabelFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
+		envString := utils2.ReadNestedListStringFromTF(d, sourcePodNameFieldName, connectionRuleEnvironmentFieldName, 0)
 		labels := utils2.GetLabelsFromMap(destinationPodLabels)
+
 		destination := &model2.PodLablesConnectionRulePart{
-			Environments:               nil,
+			Environments:               envString,
 			Labels:                     labels,
 			VulnerabilitySeverityLevel: strings.ToUpper(vulString),
 		}
@@ -589,8 +633,9 @@ func getDestination(d *schema.ResourceData) (interface{}, error) {
 
 	} else if destinationPodAny {
 		vulString := utils2.ReadNestedStringFromTF(d, destinationPodAnyFieldName, connectionRuleVulnerabilitySeverityFieldName, 0)
+		envString := utils2.ReadNestedListStringFromTF(d, sourcePodNameFieldName, connectionRuleEnvironmentFieldName, 0)
 		destination := &model2.PodAnyConnectionRulePart{
-			Environments:               nil,
+			Environments:               envString,
 			VulnerabilitySeverityLevel: strings.ToUpper(vulString),
 		}
 
@@ -647,6 +692,9 @@ func mutateDestination(d *schema.ResourceData, currentRule *model2.CdConnectionR
 		currentDestinationInSecureCN := destination.(*model2.PodAnyConnectionRulePart)
 		_ = d.Set(sourcePodAnyFieldName, []map[string]string{{
 			connectionRuleVulnerabilitySeverityFieldName: currentDestinationInSecureCN.VulnerabilitySeverityLevel,
+		}})
+		_ = d.Set(sourcePodAnyFieldName, []map[string][]string{{
+			connectionRuleEnvironmentFieldName: currentDestinationInSecureCN.Environments,
 		}})
 		_ = d.Set(destinationAddressIpRangeFieldName, nil)
 		_ = d.Set(destinationAddressDomainFieldName, nil)
@@ -737,7 +785,9 @@ func updateByPodNames(d *schema.ResourceData, part model2.ConnectionRulePart, ma
 			if key == connectionRuleVulnerabilitySeverityFieldName {
 				updateStringSubField(d, mainField, connectionRuleVulnerabilitySeverityFieldName, terraformPart, value, currentPartInSecureCN.VulnerabilitySeverityLevel)
 			}
-
+			if key == connectionRuleEnvironmentFieldName {
+				updateStringSliceSubField(d, mainField, connectionRuleEnvironmentFieldName, terraformPart, currentPartInSecureCN.Environments)
+			}
 		}
 	}
 }
@@ -757,7 +807,9 @@ func updateByLabels(d *schema.ResourceData, part model2.ConnectionRulePart, main
 			if key == connectionRuleVulnerabilitySeverityFieldName {
 				updateStringSubField(d, mainField, connectionRuleVulnerabilitySeverityFieldName, terraformPart, value, currentPartInSecureCN.VulnerabilitySeverityLevel)
 			}
-
+			if key == connectionRuleEnvironmentFieldName {
+				updateStringSliceSubField(d, mainField, connectionRuleEnvironmentFieldName, terraformPart, currentPartInSecureCN.Environments)
+			}
 		}
 	}
 }

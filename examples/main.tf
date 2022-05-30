@@ -71,10 +71,12 @@ resource "securecn_connection_rule" "securecn_connection_rule" {
 
   source_by_pod_any {
     vulnerability_severity_level = "HIGH"
+    environments = [securecn_environment.env1.name]
   }
 
   destination_by_pod_any {
     vulnerability_severity_level = "HIGH"
+    environments = [securecn_environment.env1.name]
   }
 }
 
