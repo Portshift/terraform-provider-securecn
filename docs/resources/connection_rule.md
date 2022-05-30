@@ -3,7 +3,7 @@
 page_title: "securecn_connection_rule Resource - terraform-provider-securecn"
 subcategory: ""
 description: |-
-  A SecureCN k8s connection rule
+A SecureCN k8s connection rule
 ---
 
 # securecn_connection_rule (Resource)
@@ -58,7 +58,7 @@ Required:
 Optional:
 
 - **vulnerability_severity_level** (String)
-
+- **environments** (List of String)
 
 <a id="nestedblock--destination_by_pod_label"></a>
 ### Nested Schema for `destination_by_pod_label`
@@ -70,6 +70,7 @@ Required:
 Optional:
 
 - **vulnerability_severity_level** (String)
+- **environments** (List of String)
 
 
 <a id="nestedblock--destination_by_pod_name"></a>
@@ -82,6 +83,7 @@ Required:
 Optional:
 
 - **vulnerability_severity_level** (String)
+- **environments** (List of String)
 
 
 <a id="nestedblock--source_by_ip_range"></a>
@@ -98,7 +100,7 @@ Required:
 Optional:
 
 - **vulnerability_severity_level** (String)
-
+- **environments** (List of String)
 
 <a id="nestedblock--source_by_pod_label"></a>
 ### Nested Schema for `source_by_pod_label`
@@ -110,7 +112,7 @@ Required:
 Optional:
 
 - **vulnerability_severity_level** (String)
-
+- **environments** (List of String)
 
 <a id="nestedblock--source_by_pod_name"></a>
 ### Nested Schema for `source_by_pod_name`
@@ -122,5 +124,5 @@ Required:
 Optional:
 
 - **vulnerability_severity_level** (String)
-
+- **environments** (List of String)
 
