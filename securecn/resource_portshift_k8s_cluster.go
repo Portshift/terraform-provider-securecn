@@ -39,6 +39,7 @@ const CiImageValidationFieldName = "ci_image_validation"
 const RestrictRegistries = "restrict_registries"
 const CdPodTemplateFieldName = "cd_pod_template"
 const ConnectionsControlFieldName = "connections_control"
+const IstioAlreadyInstalledFieldName = "istio_already_installed"
 const IstioVersionFieldName = "istio_version"
 const IstioIngressEnabledFieldName = "istio_ingress_enabled"
 const IstioIngressAnnotationsFieldName = "istio_ingress_annotations"
@@ -79,7 +80,8 @@ func ResourceCluster() *schema.Resource {
 			CdPodTemplateFieldName:                    {Type: schema.TypeBool, Optional: true, Default: false, Description: "Identify pod templates only originating from SecureCN CD plugin"},
 			RestrictRegistries:                        {Type: schema.TypeBool, Optional: true, Default: false, Description: "Workload from untrusted registries will be marked as 'unknown'"},
 			ConnectionsControlFieldName:               {Type: schema.TypeBool, Optional: true, Default: true, Description: "Enable connections control"},
-			IstioVersionFieldName:                     {Type: schema.TypeString, Optional: true, Default: nil, Computed: true, Description: "When installing SecureCN agent deployment, use the already existing Istio deployment"},
+			IstioAlreadyInstalledFieldName:			   {Type: schema.TypeBool, Optional: true, Default: false, Description: "if false, istio will be installed, otherwise the controller will use the previously installed istio"},
+			IstioVersionFieldName:                     {Type: schema.TypeString, Optional: true, Default: nil, Computed: true, Description: "if istio already installed, this specifies its version"},
 			IstioIngressEnabledFieldName:              {Type: schema.TypeBool, Optional: true, Computed: true, Description: "If installing Istio, use Istio ingress"},
 			IstioIngressAnnotationsFieldName:          {Type: schema.TypeMap, Elem: schema.TypeString, Optional: true, Default: map[string]string{}, Description: "If enabling Istio ingress, use Istio these ingress annotation"},
 			MultiClusterCommunicationSupportFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "Enable multi cluster communication"},
@@ -468,6 +470,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	cdPodTemplate := d.Get(CdPodTemplateFieldName).(bool)
 	restrictRegistries := d.Get(RestrictRegistries).(bool)
 	connectionsControl := d.Get(ConnectionsControlFieldName).(bool)
+	istioAlredyInstalled := d.Get(IstioAlreadyInstalledFieldName).(bool)
 	istioVersion := d.Get(IstioVersionFieldName).(string)
 	istioIngressEnabled := d.Get(IstioIngressEnabledFieldName).(bool)
 	istioIngressAnnotationsRaw := cast.ToStringMapString(d.Get(IstioIngressAnnotationsFieldName))
@@ -487,7 +490,6 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	orchestrationType := d.Get(OrchestrationTypeFieldName).(string)
 	minimumReplicas := d.Get(MinimumReplicasFieldName).(int)
 
-	isIstioAlreadyInstalled := istioVersion != ""
 	enableProxy := externalHttpsProxy != ""
 	clusterPodDefinitionSource := model.ClusterPodDefinitionSourceKUBERNETES
 	if cdPodTemplate {
@@ -499,7 +501,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		HTTPSProxy:  externalHttpsProxy,
 	}
 	istioParams := &model.IstioInstallationParameters{
-		IsIstioAlreadyInstalled: &isIstioAlreadyInstalled,
+		IsIstioAlreadyInstalled: &istioAlredyInstalled,
 		IstioVersion:            istioVersion,
 	}
 	enableAPIIntelligenceDAST := d.Get(EnableApiIntelligenceDASTFieldName).(bool)
@@ -615,6 +617,7 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(CiImageValidationFieldName, secureCNCluster.CiImageValidation)
 	_ = d.Set(CdPodTemplateFieldName, secureCNCluster.ClusterPodDefinitionSource == "CD")
 	_ = d.Set(ConnectionsControlFieldName, secureCNCluster.EnableConnectionsControl)
+	_ = d.Set(IstioAlreadyInstalledFieldName, secureCNCluster.IstioInstallationParameters.IsIstioAlreadyInstalled)
 	_ = d.Set(IstioVersionFieldName, secureCNCluster.IstioInstallationParameters.IstioVersion)
 	_ = d.Set(MultiClusterCommunicationSupportFieldName, secureCNCluster.IsMultiCluster)
 	_ = d.Set(InspectIncomingClusterConnectionsFieldName, secureCNCluster.PreserveOriginalSourceIP)
