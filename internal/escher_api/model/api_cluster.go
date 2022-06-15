@@ -107,7 +107,7 @@ type KubernetesCluster struct {
 	MinimalNumberOfControllerReplicas int `json:"minimalNumberOfControllerReplicas,omitempty"`
 
 	// indicates whether ci image signer validation is Enabled
-	CiImageSignerValidationEnabled *bool `json:"ciImageSignerValidationEnabled,omitempty"`
+	CiImageSignatureValidation *bool `json:"ciImageSignatureValidation,omitempty"`
 }
 
 // Validate validates this kubernetes cluster

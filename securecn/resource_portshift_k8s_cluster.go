@@ -64,7 +64,7 @@ const PersistentStorageFieldName = "persistent_storage"
 const ExternalHttpsProxyFieldName = "external_https_proxy"
 const OrchestrationTypeFieldName = "orchestration_type"
 const MinimumReplicasFieldName = "minimum_replicas"
-const CiImageSignerValidationEnabledFieldName = "ci_image_signer_validation_enabled"
+const ciImageSignatureValidationFieldName = "ci_image_signer_validation_enabled"
 
 func ResourceCluster() *schema.Resource {
 	return &schema.Resource{
@@ -200,7 +200,7 @@ func ResourceCluster() *schema.Resource {
 					return
 				},
 			},
-			CiImageSignerValidationEnabledFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "indicates whether ci image signer validation is Enabled"},
+			ciImageSignatureValidationFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "indicates whether ci image signer validation is Enabled"},
 		},
 	}
 }
@@ -484,7 +484,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	supportsMultiClusterCommunication := d.Get(MultiClusterCommunicationSupportFieldName).(bool)
 	inspectIncomingClusterConnections := d.Get(InspectIncomingClusterConnectionsFieldName).(bool)
 	failClose := d.Get(FailCloseFieldName).(bool)
-	ciImageSignerValidationEnabled := d.Get(CiImageSignerValidationEnabledFieldName).(bool)
+	ciImageSignatureValidation := d.Get(ciImageSignatureValidationFieldName).(bool)
 	persistentStorage := d.Get(PersistentStorageFieldName).(bool)
 	externalHttpsProxy := d.Get(ExternalHttpsProxyFieldName).(string)
 	orchestrationType := d.Get(OrchestrationTypeFieldName).(string)
@@ -538,7 +538,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		TLSInspectionEnabled:              &enableTLSInspection,
 		TokenInjectionEnabled:             &enableTokenInjection,
 		MinimalNumberOfControllerReplicas: minimumReplicas,
-		CiImageSignerValidationEnabled:    &ciImageSignerValidationEnabled,
+		CiImageSignatureValidation:        &ciImageSignatureValidation,
 	}
 
 	if installTracingSupport {
@@ -622,7 +622,7 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(MultiClusterCommunicationSupportFieldName, secureCNCluster.IsMultiCluster)
 	_ = d.Set(InspectIncomingClusterConnectionsFieldName, secureCNCluster.PreserveOriginalSourceIP)
 	_ = d.Set(FailCloseFieldName, secureCNCluster.AgentFailClose)
-	_ = d.Set(CiImageSignerValidationEnabledFieldName, secureCNCluster.CiImageSignerValidationEnabled)
+	_ = d.Set(ciImageSignatureValidationFieldName, secureCNCluster.CiImageSignatureValidation)
 	_ = d.Set(PersistentStorageFieldName, secureCNCluster.IsPersistent)
 	_ = d.Set(ExternalHttpsProxyFieldName, secureCNCluster.ProxyConfiguration.HTTPSProxy)
 	_ = d.Set(OrchestrationTypeFieldName, secureCNCluster.OrchestrationType)
