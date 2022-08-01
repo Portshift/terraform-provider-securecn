@@ -101,7 +101,7 @@ type KubernetesCluster struct {
 	TokenInjectionEnabled *bool `json:"tokenInjectionEnabled,omitempty"`
 
 	// tracing support configuration. enabled for ApiSecurity enabled accounts
-	TracingSupportSettings *TracingSupportSettings `json:"tracingSupportSettings,omitempty"`
+	InstallTracingSupport *bool `json:"installTracingSupport,omitempty"`
 
 	// minimum number of controller replicas"
 	MinimalNumberOfControllerReplicas int `json:"minimalNumberOfControllerReplicas,omitempty"`
@@ -155,10 +155,6 @@ func (m *KubernetesCluster) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateSidecarsResources(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateTracingSupportSettings(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -380,24 +376,6 @@ func (m *KubernetesCluster) validateSidecarsResources(formats strfmt.Registry) e
 		if err := m.SidecarsResources.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("sidecarsResources")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (m *KubernetesCluster) validateTracingSupportSettings(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.TracingSupportSettings) { // not required
-		return nil
-	}
-
-	if m.TracingSupportSettings != nil {
-		if err := m.TracingSupportSettings.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("tracingSupportSettings")
 			}
 			return err
 		}
