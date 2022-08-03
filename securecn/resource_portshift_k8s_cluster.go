@@ -615,7 +615,6 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(TLSInspectionFieldName, secureCNCluster.TLSInspectionEnabled)
 	_ = d.Set(TokenInjectionFieldName, secureCNCluster.TokenInjectionEnabled)
 	_ = d.Set(ServiceDiscoveryIsolationFieldName, secureCNCluster.ServiceDiscoveryIsolationEnabled)
-	_ = d.Set(InstallTracingSupportFieldName, secureCNCluster.InstallTracingSupport)
 }
 
 func validateConfig(d *schema.ResourceData) error {
