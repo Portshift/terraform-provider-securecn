@@ -59,7 +59,7 @@ func ExecuteScript(scriptPath string, multiClusterCertsFolder string, skipReadyC
 }
 
 func MakeExecutable(scriptPath string) error {
-	log.Printf("[DEBUG] making executable2222: " + scriptPath)
+	log.Printf("[DEBUG] making executable: " + scriptPath)
 
 	err := os.Chmod(scriptPath, 0700)
 	if err != nil {
