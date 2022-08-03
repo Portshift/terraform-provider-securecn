@@ -28,6 +28,7 @@ const yamlFilePath = "securecn_bundle.yml"
 const patchDnsFilePath = "patch_dns.sh"
 const certsGenFilePath = "certs_gen.sh"
 const vaultCertsGenFilePath = "certs_gen_vault.sh"
+const tracingCertsFilePath = "certs_gen_tracing.sh"
 const vaultCertsFolder = "vault_certs"
 const uninstallAgentCommandFormat = "KUBECONFIG=%s kubectl get cm -n portshift portshift-uninstaller -o jsonpath='{.data.config}' | KUBECONFIG=%s bash"
 const useK8sContextCommandFormat = "kubectl config use-context"
@@ -228,8 +229,9 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	multiClusterFolder := d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string)
 	tokenInjection := d.Get(TokenInjectionFieldName).(bool)
 	skipReadyCheck := d.Get(SkipReadyCheckFieldName).(bool)
+	tracingEnabled := d.Get(InstallTracingSupportFieldName).(bool)
 
-	err = installAgent(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext, multiClusterFolder, tokenInjection, skipReadyCheck)
+	err = installAgent(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext, multiClusterFolder, tracingEnabled, tokenInjection, skipReadyCheck)
 	if err != nil {
 		_ = serviceApi.DeleteKubernetesCluster(ctx, httpClientWrapper.HttpClient, clusterId)
 		return diag.FromErr(err)
@@ -340,7 +342,7 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, context string, multiClusterFolder string, tokenInjection bool, skipReadyCheck bool) error {
+func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, context string, multiClusterFolder string, tracingEnabled bool, tokenInjection bool, skipReadyCheck bool) error {
 	log.Print("[DEBUG] installing agent")
 	err := downloadAndExtractBundle(ctx, serviceApi, httpClientWrapper, clusterId)
 	if err != nil {
@@ -349,6 +351,13 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 
 	if tokenInjection {
 		err = utils2.MakeExecutable(vaultCertsGenFilePath)
+		if err != nil {
+			return err
+		}
+	}
+
+	if tracingEnabled {
+		err = utils2.MakeExecutable(tracingCertsFilePath)
 		if err != nil {
 			return err
 		}
@@ -379,6 +388,10 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 	if tokenInjection {
 		defer os.Remove(vaultCertsGenFilePath)
 		defer os.RemoveAll(vaultCertsFolder)
+	}
+
+	if tracingEnabled {
+		defer os.Remove(tracingCertsFilePath)
 	}
 
 	return nil
@@ -654,7 +667,7 @@ func updateAgent(context string, multiClusterFolder string, clusterInTerraformCo
 		if err != nil {
 			return err
 		}
-		err = installAgent(nil, serviceApi, httpClientWrapper, clusterId, context, multiClusterFolder, tokenInjection, skipReadyCheck)
+		err = installAgent(nil, serviceApi, httpClientWrapper, clusterId, context, multiClusterFolder, *clusterInTerraformConfig.InstallTracingSupport, tokenInjection, skipReadyCheck)
 		if err != nil {
 			return err
 		}
