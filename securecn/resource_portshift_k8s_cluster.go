@@ -28,6 +28,7 @@ const yamlFilePath = "securecn_bundle.yml"
 const patchDnsFilePath = "patch_dns.sh"
 const certsGenFilePath = "certs_gen.sh"
 const vaultCertsGenFilePath = "certs_gen_vault.sh"
+const tracingCertsFilePath = "certs_gen_tracing.sh"
 const vaultCertsFolder = "vault_certs"
 const uninstallAgentCommandFormat = "KUBECONFIG=%s kubectl get cm -n portshift portshift-uninstaller -o jsonpath='{.data.config}' | KUBECONFIG=%s bash"
 const useK8sContextCommandFormat = "kubectl config use-context"
@@ -52,9 +53,7 @@ const ServiceDiscoveryIsolationFieldName = "service_discovery_isolation"
 const TLSInspectionFieldName = "tls_inspection"
 const TokenInjectionFieldName = "token_injection"
 const SkipReadyCheckFieldName = "skip_ready_check"
-const TracingSupportFieldName = "tracing_support"
-const TraceAnalyzerFieldName = "trace_analyzer"
-const SpecReconstructionFieldName = "spec_reconstruction"
+const InstallTracingSupportFieldName = "install_tracing_support"
 const SidecarResourcesFieldName = "sidecar_resources"
 const MultiClusterCommunicationSupportFieldName = "multi_cluster_communication_support"
 const MultiClusterCommunicationSupportCertsPathFieldName = MultiClusterCommunicationSupportFieldName + "_certs_path"
@@ -80,7 +79,7 @@ func ResourceCluster() *schema.Resource {
 			CdPodTemplateFieldName:                    {Type: schema.TypeBool, Optional: true, Default: false, Description: "Identify pod templates only originating from SecureCN CD plugin"},
 			RestrictRegistries:                        {Type: schema.TypeBool, Optional: true, Default: false, Description: "Workload from untrusted registries will be marked as 'unknown'"},
 			ConnectionsControlFieldName:               {Type: schema.TypeBool, Optional: true, Default: true, Description: "Enable connections control"},
-			IstioAlreadyInstalledFieldName:			   {Type: schema.TypeBool, Optional: true, Default: false, Description: "if false, istio will be installed, otherwise the controller will use the previously installed istio"},
+			IstioAlreadyInstalledFieldName:            {Type: schema.TypeBool, Optional: true, Default: false, Description: "if false, istio will be installed, otherwise the controller will use the previously installed istio"},
 			IstioVersionFieldName:                     {Type: schema.TypeString, Optional: true, Default: nil, Computed: true, Description: "if istio already installed, this specifies its version"},
 			IstioIngressEnabledFieldName:              {Type: schema.TypeBool, Optional: true, Computed: true, Description: "If installing Istio, use Istio ingress"},
 			IstioIngressAnnotationsFieldName:          {Type: schema.TypeMap, Elem: schema.TypeString, Optional: true, Default: map[string]string{}, Description: "If enabling Istio ingress, use Istio these ingress annotation"},
@@ -110,9 +109,7 @@ func ResourceCluster() *schema.Resource {
 			TLSInspectionFieldName:                   {Type: schema.TypeBool, Optional: true, Computed: true, Description: "Indicates whether the TLS inspection is enabled"},
 			TokenInjectionFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the token injection is enabled"},
 			SkipReadyCheckFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the cluster installation should be async"},
-			TracingSupportFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install tracing support, enable for apiSecurity accounts."},
-			TraceAnalyzerFieldName:                   {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the trace analyzer is enabled"},
-			SpecReconstructionFieldName:              {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the OpenAPI specification reconstruction is enabled"},
+			InstallTracingSupportFieldName:           {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install tracing support, enable for apiSecurity accounts."},
 			ExternalCAFieldName: {
 				Description: "Use an external CA for this cluster",
 				Optional:    true,
@@ -232,8 +229,9 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	multiClusterFolder := d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string)
 	tokenInjection := d.Get(TokenInjectionFieldName).(bool)
 	skipReadyCheck := d.Get(SkipReadyCheckFieldName).(bool)
+	tracingEnabled := d.Get(InstallTracingSupportFieldName).(bool)
 
-	err = installAgent(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext, multiClusterFolder, tokenInjection, skipReadyCheck)
+	err = installAgent(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext, multiClusterFolder, tracingEnabled, tokenInjection, skipReadyCheck)
 	if err != nil {
 		_ = serviceApi.DeleteKubernetesCluster(ctx, httpClientWrapper.HttpClient, clusterId)
 		return diag.FromErr(err)
@@ -268,7 +266,7 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 		certsFolder := d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string)
 		tokenInjection := d.Get(TokenInjectionFieldName).(bool)
 		skipReadyCheck := d.Get(SkipReadyCheckFieldName).(bool)
-		err = updateAgent(k8sContext, certsFolder, kubernetesClusterFromConfig, tokenInjection, *secureCNCluster.Payload.IsMultiCluster, *secureCNCluster.Payload.EnableConnectionsControl, *secureCNCluster.Payload.AgentFailClose, *secureCNCluster.Payload.IsPersistent, *secureCNCluster.Payload.ProxyConfiguration, serviceApi, httpClientWrapper, strfmt.UUID(clusterId), skipReadyCheck)
+		err = updateAgent(k8sContext, certsFolder, kubernetesClusterFromConfig, tokenInjection, *secureCNCluster.Payload.IsMultiCluster, *secureCNCluster.Payload.EnableConnectionsControl, *secureCNCluster.Payload.AgentFailClose, *secureCNCluster.Payload.IsPersistent, *secureCNCluster.Payload.InstallTracingSupport, *secureCNCluster.Payload.ProxyConfiguration, serviceApi, httpClientWrapper, strfmt.UUID(clusterId), skipReadyCheck)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -310,7 +308,7 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	certsFolder := d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string)
 	tokenInjection := d.Get(TokenInjectionFieldName).(bool)
 
-	err = updateAgent(k8sContext, certsFolder, kubernetesClusterFromConfig, tokenInjection, *updatedCluster.Payload.IsMultiCluster, *updatedCluster.Payload.EnableConnectionsControl, *updatedCluster.Payload.AgentFailClose, *updatedCluster.Payload.IsPersistent, *updatedCluster.Payload.ProxyConfiguration, serviceApi, httpClientWrapper, strfmt.UUID(clusterId), false) //TODO update other fields, tests
+	err = updateAgent(k8sContext, certsFolder, kubernetesClusterFromConfig, tokenInjection, *updatedCluster.Payload.IsMultiCluster, *updatedCluster.Payload.EnableConnectionsControl, *updatedCluster.Payload.AgentFailClose, *updatedCluster.Payload.IsPersistent, *updatedCluster.Payload.InstallTracingSupport, *updatedCluster.Payload.ProxyConfiguration, serviceApi, httpClientWrapper, strfmt.UUID(clusterId), false) //TODO update other fields, tests
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -344,7 +342,7 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, context string, multiClusterFolder string, tokenInjection bool, skipReadyCheck bool) error {
+func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, context string, multiClusterFolder string, tracingEnabled bool, tokenInjection bool, skipReadyCheck bool) error {
 	log.Print("[DEBUG] installing agent")
 	err := downloadAndExtractBundle(ctx, serviceApi, httpClientWrapper, clusterId)
 	if err != nil {
@@ -353,6 +351,13 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 
 	if tokenInjection {
 		err = utils2.MakeExecutable(vaultCertsGenFilePath)
+		if err != nil {
+			return err
+		}
+	}
+
+	if tracingEnabled {
+		err = utils2.MakeExecutable(tracingCertsFilePath)
 		if err != nil {
 			return err
 		}
@@ -383,6 +388,10 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 	if tokenInjection {
 		defer os.Remove(vaultCertsGenFilePath)
 		defer os.RemoveAll(vaultCertsFolder)
+	}
+
+	if tracingEnabled {
+		defer os.Remove(tracingCertsFilePath)
 	}
 
 	return nil
@@ -510,10 +519,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	enableServiceDiscoveryIsolation := d.Get(ServiceDiscoveryIsolationFieldName).(bool)
 	enableTLSInspection := d.Get(TLSInspectionFieldName).(bool)
 	enableTokenInjection := d.Get(TokenInjectionFieldName).(bool)
-	tracingSupportEnabled := d.Get(TracingSupportFieldName).(bool)
-	traceAnalyzerEnabled := d.Get(TraceAnalyzerFieldName).(bool)
-	specReconstructionEnabled := d.Get(SpecReconstructionFieldName).(bool)
-	installTracingSupport := tracingSupportEnabled || traceAnalyzerEnabled || specReconstructionEnabled
+	installTracingSupport := d.Get(InstallTracingSupportFieldName).(bool)
 
 	cluster := &model.KubernetesCluster{
 		AgentFailClose:                    &failClose,
@@ -539,14 +545,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		TokenInjectionEnabled:             &enableTokenInjection,
 		MinimalNumberOfControllerReplicas: minimumReplicas,
 		CiImageSignatureValidation:        &ciImageSignatureValidation,
-	}
-
-	if installTracingSupport {
-		cluster.TracingSupportSettings = &model.TracingSupportSettings{
-			InstallTracingSupport:    &installTracingSupport,
-			TraceAnalyzerEnabled:     &traceAnalyzerEnabled,
-			SpecReconstructorEnabled: &specReconstructionEnabled,
-		}
+		InstallTracingSupport:             &installTracingSupport,
 	}
 
 	externalCaId := utils2.ReadNestedStringFromTF(d, ExternalCAFieldName, "id", 0)
@@ -653,13 +652,14 @@ func validateConfig(d *schema.ResourceData) error {
 	return nil
 }
 
-func updateAgent(context string, multiClusterFolder string, clusterInTerraformConfig *model.KubernetesCluster, tokenInjection bool, prevIsMultiCluster bool, prevConnectionControl bool, prevAgentFailClose bool, prevIsPersistent bool, prevProxyConfiguration model.ProxyConfiguration, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, skipReadyCheck bool) error {
+func updateAgent(context string, multiClusterFolder string, clusterInTerraformConfig *model.KubernetesCluster, tokenInjection bool, prevIsMultiCluster bool, prevConnectionControl bool, prevAgentFailClose bool, prevIsPersistent bool, prevTracingSupport bool, prevProxyConfiguration model.ProxyConfiguration, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, skipReadyCheck bool) error {
 	needsUpdate := *clusterInTerraformConfig.IsMultiCluster != prevIsMultiCluster
 	needsUpdate = needsUpdate || *clusterInTerraformConfig.EnableConnectionsControl != prevConnectionControl
 	needsUpdate = needsUpdate || *clusterInTerraformConfig.AgentFailClose != prevAgentFailClose
 	needsUpdate = needsUpdate || *clusterInTerraformConfig.IsPersistent != prevIsPersistent
 	needsUpdate = needsUpdate || *clusterInTerraformConfig.ProxyConfiguration.EnableProxy != *prevProxyConfiguration.EnableProxy
 	needsUpdate = needsUpdate || clusterInTerraformConfig.ProxyConfiguration.HTTPSProxy != prevProxyConfiguration.HTTPSProxy
+	needsUpdate = needsUpdate || *clusterInTerraformConfig.InstallTracingSupport != prevTracingSupport
 
 	if needsUpdate {
 		log.Print("[DEBUG] updating agent")
@@ -667,7 +667,7 @@ func updateAgent(context string, multiClusterFolder string, clusterInTerraformCo
 		if err != nil {
 			return err
 		}
-		err = installAgent(nil, serviceApi, httpClientWrapper, clusterId, context, multiClusterFolder, tokenInjection, skipReadyCheck)
+		err = installAgent(nil, serviceApi, httpClientWrapper, clusterId, context, multiClusterFolder, *clusterInTerraformConfig.InstallTracingSupport, tokenInjection, skipReadyCheck)
 		if err != nil {
 			return err
 		}
