@@ -25,12 +25,9 @@ import (
 
 const secureCNBundleFilePath = "securecn_bundle.tar.gz"
 const scriptFilePath = "install_bundle.sh"
-const yamlFilePath = "securecn_bundle.yml"
-const patchDnsFilePath = "patch_dns.sh"
-const certsGenFilePath = "certs_gen.sh"
+
 const vaultCertsGenFilePath = "certs_gen_vault.sh"
 const tracingCertsFilePath = "certs_gen_tracing.sh"
-const vaultCertsFolder = "vault_certs"
 const uninstallAgentCommandFormat = "KUBECONFIG=%s kubectl get cm -n portshift portshift-uninstaller -o jsonpath='{.data.config}' | KUBECONFIG=%s bash"
 const useK8sContextCommandFormat = "kubectl config use-context"
 const viewK8sConfigCommand = "kubectl config view --raw"
@@ -49,13 +46,24 @@ const EnableApiIntelligenceDASTFieldName = "api_intelligence_dast"
 const EnableAutoLabelFieldName = "auto_labeling"
 const HoldApplicationUntilProxyStartsFieldName = "hold_application_until_proxy_starts"
 const ExternalCAFieldName = "external_ca"
+const ExternalCAFieldNameId = "id"
+const ExternalCAFieldNameName = "name"
 const InternalRegistryFieldName = "internal_registry"
+const InternalRegistryFieldNameUrl = "InternalRegistryFieldNameUrl"
 const ServiceDiscoveryIsolationFieldName = "service_discovery_isolation"
 const TLSInspectionFieldName = "tls_inspection"
 const TokenInjectionFieldName = "token_injection"
 const SkipReadyCheckFieldName = "skip_ready_check"
 const InstallTracingSupportFieldName = "install_tracing_support"
 const SidecarResourcesFieldName = "sidecar_resources"
+const SidecarResourcesFieldNameProxyInitLimitsCpu = "proxy_init_limits_cpu"
+const SidecarResourcesFieldNameProxyInitLimitsMemory = "proxy_init_limits_memory"
+const SidecarResourcesFieldNameProxyInitRequestsCpu = "proxy_init_requests_cpu"
+const SidecarResourcesFieldNameProxyInitRequestsMemory = "proxy_init_requests_memory"
+const SidecarResourcesFieldNameProxyLimitsCpu = "proxy_limits_cpu"
+const SidecarResourcesFieldNameProxyLimitsMemory = "proxy_limits_memory"
+const SidecarResourcesFieldNameProxyRequestsCpu = "proxy_requests_cpu"
+const SidecarResourcesFieldNameProxyRequestsMemory = "proxy_requests_memory"
 const MultiClusterCommunicationSupportFieldName = "multi_cluster_communication_support"
 const MultiClusterCommunicationSupportCertsPathFieldName = MultiClusterCommunicationSupportFieldName + "_certs_path"
 const InspectIncomingClusterConnectionsFieldName = "inspect_incoming_cluster_connections"
@@ -118,13 +126,13 @@ func ResourceCluster() *schema.Resource {
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"id": {
+						ExternalCAFieldNameId: {
 							Description:  "The id of the external CA",
 							Optional:    true,
 							Type:         schema.TypeString,
 							ValidateFunc: validation.IsUUID,
 						},
-						"name": {
+						ExternalCAFieldNameName: {
 							Description: "The name of the external CA",
 							Optional:    true,
 							Type:        schema.TypeString,
@@ -139,8 +147,8 @@ func ResourceCluster() *schema.Resource {
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"url": {
-							Description: "The url of the internal registry",
+						InternalRegistryFieldNameUrl: {
+							Description: "The InternalRegistryFieldNameUrl of the internal registry",
 							Type:        schema.TypeString,
 							Optional:    true,
 						},
@@ -154,35 +162,35 @@ func ResourceCluster() *schema.Resource {
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"proxy_init_limits_cpu": {
+						SidecarResourcesFieldNameProxyInitLimitsCpu: {
 							Type:     schema.TypeInt,
 							Optional: true,
 						},
-						"proxy_init_limits_memory": {
+						SidecarResourcesFieldNameProxyInitLimitsMemory: {
 							Type:     schema.TypeInt,
 							Optional: true,
 						},
-						"proxy_init_requests_cpu": {
+						SidecarResourcesFieldNameProxyInitRequestsCpu: {
 							Type:     schema.TypeInt,
 							Optional: true,
 						},
-						"proxy_init_requests_memory": {
+						SidecarResourcesFieldNameProxyInitRequestsMemory: {
 							Type:     schema.TypeInt,
 							Optional: true,
 						},
-						"proxy_limits_cpu": {
+						SidecarResourcesFieldNameProxyLimitsCpu: {
 							Type:     schema.TypeInt,
 							Optional: true,
 						},
-						"proxy_limits_memory": {
+						SidecarResourcesFieldNameProxyLimitsMemory: {
 							Type:     schema.TypeInt,
 							Optional: true,
 						},
-						"proxy_requests_cpu": {
+						SidecarResourcesFieldNameProxyRequestsCpu: {
 							Type:     schema.TypeInt,
 							Optional: true,
 						},
-						"proxy_requests_memory": {
+						SidecarResourcesFieldNameProxyRequestsMemory: {
 							Type:     schema.TypeInt,
 							Optional: true,
 						},
@@ -537,7 +545,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		}
 	}
 
-	url := utils2.ReadNestedStringFromTF(d, InternalRegistryFieldName, "url", 0)
+	url := utils2.ReadNestedStringFromTF(d, InternalRegistryFieldName, "InternalRegistryFieldNameUrl", 0)
 	if url != "" {
 		trueVar := true
 		cluster.InternalRegistryParameters = &model.InternalRegistryParameters{
@@ -546,7 +554,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		}
 	}
 
-	internalRegistryUrl := utils2.ReadNestedStringFromTF(d, InternalRegistryFieldName, "url", 0)
+	internalRegistryUrl := utils2.ReadNestedStringFromTF(d, InternalRegistryFieldName, "InternalRegistryFieldNameUrl", 0)
 	if internalRegistryUrl != "" {
 		internalRegistryEnabled := true
 		cluster.InternalRegistryParameters = &model.InternalRegistryParameters{
@@ -626,19 +634,19 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(InstallTracingSupportFieldName, secureCNCluster.InstallTracingSupport)
 	_ = d.Set(MinimumReplicasFieldName, secureCNCluster.MinimalNumberOfControllerReplicas)
 	_ = d.Set(InternalRegistryFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{{
-		"url", secureCNCluster.InternalRegistryParameters.InternalRegistry}}))
+		InternalRegistryFieldNameUrl, secureCNCluster.InternalRegistryParameters.InternalRegistry}}))
 	_ = d.Set(ExternalCAFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{
-		{"id", secureCNCluster.ExternalCa.ID},
-		{"name", secureCNCluster.ExternalCa.Name}}))
+		{ExternalCAFieldNameId, secureCNCluster.ExternalCa.ID},
+		{ExternalCAFieldNameName, secureCNCluster.ExternalCa.Name}}))
 	_ = d.Set(SidecarResourcesFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{
-		{"proxy_init_limits_cpu", secureCNCluster.SidecarsResources.ProxyInitLimitsCPU},
-		{"proxy_init_limits_memory", secureCNCluster.SidecarsResources.ProxyInitLimitsMemory},
-		{"proxy_init_requests_cpu", secureCNCluster.SidecarsResources.ProxyInitRequestsCPU},
-		{"proxy_init_requests_memory", secureCNCluster.SidecarsResources.ProxyInitRequestsMemory},
-		{"proxy_limits_cpu", secureCNCluster.SidecarsResources.ProxyLimitsCPU},
-		{"proxy_limits_memory", secureCNCluster.SidecarsResources.ProxyLimitsMemory},
-		{"proxy_requests_cpu", secureCNCluster.SidecarsResources.ProxyRequestCPU},
-		{"proxy_requests_memory", secureCNCluster.SidecarsResources.ProxyRequestMemory}}))
+		{SidecarResourcesFieldNameProxyInitLimitsCpu, secureCNCluster.SidecarsResources.ProxyInitLimitsCPU},
+		{SidecarResourcesFieldNameProxyInitLimitsMemory, secureCNCluster.SidecarsResources.ProxyInitLimitsMemory},
+		{SidecarResourcesFieldNameProxyInitRequestsCpu, secureCNCluster.SidecarsResources.ProxyInitRequestsCPU},
+		{SidecarResourcesFieldNameProxyInitRequestsMemory, secureCNCluster.SidecarsResources.ProxyInitRequestsMemory},
+		{SidecarResourcesFieldNameProxyLimitsCpu, secureCNCluster.SidecarsResources.ProxyLimitsCPU},
+		{SidecarResourcesFieldNameProxyLimitsMemory, secureCNCluster.SidecarsResources.ProxyLimitsMemory},
+		{SidecarResourcesFieldNameProxyRequestsCpu, secureCNCluster.SidecarsResources.ProxyRequestCPU},
+		{SidecarResourcesFieldNameProxyRequestsMemory, secureCNCluster.SidecarsResources.ProxyRequestMemory}}))
 }
 
 func validateConfig(d *schema.ResourceData) error {
