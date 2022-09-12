@@ -15,7 +15,7 @@ func GetTfMapFromKeyValuePairs(entries []KeyValue) []interface{} {
 	externalCa := make(map[string]interface{})
 
 	for _, entry := range entries {
-		externalCa[entry.key] = entry.value
+		externalCa[entry.Key] = entry.Value
 	}
 	array[0] = externalCa
 	return array

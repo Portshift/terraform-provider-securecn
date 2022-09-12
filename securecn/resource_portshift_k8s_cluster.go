@@ -146,7 +146,6 @@ func ResourceCluster() *schema.Resource {
 					},
 				},
 			},
-			asd
 			SidecarResourcesFieldName: {
 				Description: "Define resource limits for Istio sidecars",
 				Optional:    true,
@@ -626,26 +625,26 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(TLSInspectionFieldName, secureCNCluster.TLSInspectionEnabled)
 	_ = d.Set(TokenInjectionFieldName, secureCNCluster.TokenInjectionEnabled)
 	_ = d.Set(ServiceDiscoveryIsolationFieldName, secureCNCluster.ServiceDiscoveryIsolationEnabled)
-
 	_ = d.Set(RestrictRegistriesFieldName, secureCNCluster.RestrictRegistires)
 	_ = d.Set(IstioIngressEnabledFieldName, secureCNCluster.IsIstioIngressEnabled)
 	_ = d.Set(IstioIngressAnnotationsFieldName, secureCNCluster.IstioIngressAnnotations)
 	_ = d.Set(EnableApiIntelligenceDASTFieldName, secureCNCluster.APIIntelligenceDAST)
 	_ = d.Set(EnableAutoLabelFieldName, secureCNCluster.AutoLabelEnabled)
 	_ = d.Set(HoldApplicationUntilProxyStartsFieldName, secureCNCluster.IsHoldApplicationUntilProxyStarts)
-	_ = d.Set(InternalRegistryFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{{"url", secureCNCluster.InternalRegistryParameters.InternalRegistry}}))
-	_ = d.Set(ExternalCAFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{{"id", secureCNCluster.ExternalCa.ID}, {"name", secureCNCluster.ExternalCa.Name}}))
+	_ = d.Set(InternalRegistryFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{{
+		"url", secureCNCluster.InternalRegistryParameters.InternalRegistry}}))
+	_ = d.Set(ExternalCAFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{
+		{"id", secureCNCluster.ExternalCa.ID},
+		{"name", secureCNCluster.ExternalCa.Name}}))
 	_ = d.Set(SidecarResourcesFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{
 		{"proxy_init_limits_cpu", secureCNCluster.SidecarsResources.ProxyInitLimitsCPU},
-		{"proxy_init_limits_cpu", secureCNCluster.SidecarsResources.ProxyInitLimitsCPU},
-		{"proxy_init_limits_cpu", secureCNCluster.SidecarsResources.ProxyInitLimitsCPU},
-		{"proxy_init_limits_cpu", secureCNCluster.SidecarsResources.ProxyInitLimitsCPU},
-		{"proxy_init_limits_cpu", secureCNCluster.SidecarsResources.ProxyInitLimitsCPU},
-		{"proxy_init_limits_cpu", secureCNCluster.SidecarsResources.ProxyInitLimitsCPU},
-		{"proxy_init_limits_cpu", secureCNCluster.SidecarsResources.ProxyInitLimitsCPU},
-		{"proxy_init_limits_cpu", secureCNCluster.SidecarsResources.ProxyInitLimitsCPU}}))
-
-	//_ = d.Set(MultiClusterCommunicationSupportCertsPathFieldName, secureCNCluster.)
+		{"proxy_init_limits_memory", secureCNCluster.SidecarsResources.ProxyInitLimitsMemory},
+		{"proxy_init_requests_cpu", secureCNCluster.SidecarsResources.ProxyInitRequestsCPU},
+		{"proxy_init_requests_memory", secureCNCluster.SidecarsResources.ProxyInitRequestsMemory},
+		{"proxy_limits_cpu", secureCNCluster.SidecarsResources.ProxyLimitsCPU},
+		{"proxy_limits_memory", secureCNCluster.SidecarsResources.ProxyLimitsMemory},
+		{"proxy_requests_cpu", secureCNCluster.SidecarsResources.ProxyRequestCPU},
+		{"proxy_requests_memory", secureCNCluster.SidecarsResources.ProxyRequestMemory}}))
 }
 
 func validateConfig(d *schema.ResourceData) error {
