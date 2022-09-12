@@ -120,8 +120,8 @@ func ResourceCluster() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"id": {
 							Description:  "The id of the external CA",
+							Optional:    true,
 							Type:         schema.TypeString,
-							Required:     true,
 							ValidateFunc: validation.IsUUID,
 						},
 						"name": {
@@ -142,7 +142,7 @@ func ResourceCluster() *schema.Resource {
 						"url": {
 							Description: "The url of the internal registry",
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 						},
 					},
 				},
@@ -624,6 +624,7 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(EnableAutoLabelFieldName, secureCNCluster.AutoLabelEnabled)
 	_ = d.Set(HoldApplicationUntilProxyStartsFieldName, secureCNCluster.IsHoldApplicationUntilProxyStarts)
 	_ = d.Set(InstallTracingSupportFieldName, secureCNCluster.InstallTracingSupport)
+	_ = d.Set(MinimumReplicasFieldName, secureCNCluster.MinimalNumberOfControllerReplicas)
 	_ = d.Set(InternalRegistryFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{{
 		"url", secureCNCluster.InternalRegistryParameters.InternalRegistry}}))
 	_ = d.Set(ExternalCAFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{
