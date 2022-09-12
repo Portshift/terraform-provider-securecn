@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"io/ioutil"
 	"log"
@@ -323,20 +324,28 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, context string, multiClusterFolder string, tracingEnabled bool, tokenInjection bool, skipReadyCheck bool) error {
 	log.Print("[DEBUG] installing agent")
-	err := downloadAndExtractBundle(ctx, serviceApi, httpClientWrapper, clusterId)
+
+	installationDir := ".kubernetes_controller_installation_path_" + uuid.New().String()
+	if err := os.Mkdir(installationDir, os.ModePerm); err != nil {
+		return err
+	}
+	
+	defer removeDirectory(installationDir)
+
+	err := downloadAndExtractBundle(ctx, serviceApi, httpClientWrapper, clusterId, installationDir)
 	if err != nil {
 		return err
 	}
 
 	if tokenInjection {
-		err = utils2.MakeExecutable(vaultCertsGenFilePath)
+		err = utils2.MakeExecutable(installationDir + "/" + vaultCertsGenFilePath)
 		if err != nil {
 			return err
 		}
 	}
 
 	if tracingEnabled {
-		err = utils2.MakeExecutable(tracingCertsFilePath)
+		err = utils2.MakeExecutable(installationDir + "/" + tracingCertsFilePath)
 		if err != nil {
 			return err
 		}
@@ -349,30 +358,20 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 
 	defer os.Remove(kubeconfig)
 
-	output, err := utils2.ExecuteScript(scriptFilePath, multiClusterFolder, skipReadyCheck, kubeconfig)
+	output, err := utils2.ExecuteScript(installationDir + "/" + scriptFilePath, multiClusterFolder, skipReadyCheck, kubeconfig)
 	if err != nil {
 		return fmt.Errorf("%s:\n%s", err, output)
 	}
 
-	log.Print("[DEBUG] agent installed successfully")
+	return nil
+}
 
-	defer os.Remove(yamlFilePath)
-	defer os.Remove(scriptFilePath)
-
-	if multiClusterFolder != "" {
-		defer os.Remove(patchDnsFilePath)
-		defer os.Remove(certsGenFilePath)
+func removeDirectory(installationDir string) error{
+	err := os.RemoveAll(installationDir)
+	if err != nil {
+		log.Print("[DEBUG] failed to delete " + installationDir)
+		return err
 	}
-
-	if tokenInjection {
-		defer os.Remove(vaultCertsGenFilePath)
-		defer os.RemoveAll(vaultCertsFolder)
-	}
-
-	if tracingEnabled {
-		defer os.Remove(tracingCertsFilePath)
-	}
-
 	return nil
 }
 
@@ -431,19 +430,21 @@ func createTempKubeconfig(context string) (string, error) {
 	return kubeconfigfile.Name(), nil
 }
 
-func downloadAndExtractBundle(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID) error {
+func downloadAndExtractBundle(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, installationDir string) error {
 	log.Print("[DEBUG] downloading and extracting bundle")
-	err := downloadInstallBundle(ctx, serviceApi, httpClientWrapper.HttpClient, clusterId)
-	if err != nil {
-		return err
-	}
-	open, err := os.Open(secureCNBundleFilePath)
-	if err != nil {
-		return err
-	}
-	defer os.Remove(secureCNBundleFilePath)
 
-	err = utils2.ExtractTarGz(open)
+	bundlePath := installationDir + "/" + secureCNBundleFilePath
+
+	err := downloadInstallBundle(ctx, serviceApi, httpClientWrapper.HttpClient, clusterId, bundlePath)
+	if err != nil {
+		return err
+	}
+	open, err := os.Open(bundlePath)
+	if err != nil {
+		return err
+	}
+
+	err = utils2.ExtractTarGz(open, installationDir)
 	if err != nil {
 		return err
 	}
@@ -576,10 +577,10 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	return cluster, nil
 }
 
-func downloadInstallBundle(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, client *http.Client, clusterId strfmt.UUID) error {
+func downloadInstallBundle(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, client *http.Client, clusterId strfmt.UUID, bundlePath string) error {
 	log.Print("[DEBUG] downloading file")
 
-	file, err := os.Create(secureCNBundleFilePath)
+	file, err := os.Create(bundlePath)
 	if err != nil {
 		return err
 	}

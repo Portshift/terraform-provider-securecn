@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 )
 
-func ExtractTarGz(gzipStream io.Reader) error {
+func ExtractTarGz(gzipStream io.Reader, destinationDir string) error {
 	log.Print("[DEBUG] untaring file")
 
 	uncompressedStream, err := gzip.NewReader(gzipStream)
@@ -31,26 +31,28 @@ func ExtractTarGz(gzipStream io.Reader) error {
 			log.Fatalf("ExtractTarGz: Next() failed: %s", err.Error())
 		}
 
+		entryFile := destinationDir + "/" + header.Name
+
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := os.Mkdir(header.Name, 0755); err != nil {
+			if err := os.Mkdir(entryFile, 0755); err != nil {
 				//log.Fatalf("ExtractTarGz: Mkdir() failed: %s", err.Error())
 				return errors.New("ExtractTarGz: NewReader failed")
 
 			}
 		case tar.TypeReg:
-			outFile, err := os.Create(header.Name)
+			outFile, err := os.Create(entryFile)
 			if err != nil {
 				// We were unable to create the file because there was no
 				// Tar Directory entry corresponding to this file's directory.
 				// Let's try to create the directory and try again.
 				log.Printf("[DEBUG] We were unable to create the file because"+
 					"there was no Tar Directory entry corresponding to this file's directory. "+
-					"Let's try to create the directory [%s] and try again.", header.Name)
-				if err = os.MkdirAll(filepath.Dir(header.Name), 0755); err != nil {
-					return errors.New("ExtractTarGz: NewReader failed to create directory " + header.Name)
+					"Let's try to create the directory [%s] and try again.", entryFile)
+				if err = os.MkdirAll(filepath.Dir(entryFile), 0755); err != nil {
+					return errors.New("ExtractTarGz: NewReader failed to create directory " + entryFile)
 				}
-				outFile, err = os.Create(header.Name)
+				outFile, err = os.Create(entryFile)
 				if err != nil {
 					return errors.New("ExtractTarGz: NewReader failed")
 				}
