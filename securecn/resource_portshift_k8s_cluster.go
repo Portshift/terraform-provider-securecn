@@ -281,28 +281,19 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	clusterId := d.Id()
-	updatedCluster, err := serviceApi.UpdateKubernetesCluster(ctx, httpClientWrapper.HttpClient, kubernetesClusterFromConfig, strfmt.UUID(clusterId))
+	updatedCluster, err := serviceApi.UpdateKubernetesCluster(ctx, httpClientWrapper.HttpClient, kubernetesClusterFromConfig, strfmt.UUID(d.Id()))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	kubernetesClusterFromConfig, err = getClusterFromConfig(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	k8sContext := d.Get(KubernetesClusterContextFieldName).(string)
-	certsFolder := d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string)
-	tokenInjection := d.Get(TokenInjectionFieldName).(bool)
-
-	err = updateAgent(k8sContext, certsFolder, kubernetesClusterFromConfig, tokenInjection, *updatedCluster.Payload.IsMultiCluster, *updatedCluster.Payload.EnableConnectionsControl, *updatedCluster.Payload.AgentFailClose, *updatedCluster.Payload.IsPersistent, *updatedCluster.Payload.InstallTracingSupport, *updatedCluster.Payload.ProxyConfiguration, serviceApi, httpClientWrapper, strfmt.UUID(clusterId), false) //TODO update other fields, tests
+	err = updateAgent(ctx, d, updatedCluster.Payload, serviceApi, httpClientWrapper)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(string(updatedCluster.Payload.ID))
-	return resourceClusterRead(ctx, d, m)
+	updateMutableFields(d, updatedCluster.Payload)
+	return nil
 }
 
 func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -631,6 +622,7 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(EnableApiIntelligenceDASTFieldName, secureCNCluster.APIIntelligenceDAST)
 	_ = d.Set(EnableAutoLabelFieldName, secureCNCluster.AutoLabelEnabled)
 	_ = d.Set(HoldApplicationUntilProxyStartsFieldName, secureCNCluster.IsHoldApplicationUntilProxyStarts)
+	_ = d.Set(InstallTracingSupportFieldName, secureCNCluster.InstallTracingSupport)
 	_ = d.Set(InternalRegistryFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{{
 		"url", secureCNCluster.InternalRegistryParameters.InternalRegistry}}))
 	_ = d.Set(ExternalCAFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{
@@ -669,25 +661,21 @@ func validateConfig(d *schema.ResourceData) error {
 	return nil
 }
 
-func updateAgent(context string, multiClusterFolder string, clusterInTerraformConfig *model.KubernetesCluster, tokenInjection bool, prevIsMultiCluster bool, prevConnectionControl bool, prevAgentFailClose bool, prevIsPersistent bool, prevTracingSupport bool, prevProxyConfiguration model.ProxyConfiguration, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, skipReadyCheck bool) error {
-	needsUpdate := *clusterInTerraformConfig.IsMultiCluster != prevIsMultiCluster
-	needsUpdate = needsUpdate || *clusterInTerraformConfig.EnableConnectionsControl != prevConnectionControl
-	needsUpdate = needsUpdate || *clusterInTerraformConfig.AgentFailClose != prevAgentFailClose
-	needsUpdate = needsUpdate || *clusterInTerraformConfig.IsPersistent != prevIsPersistent
-	needsUpdate = needsUpdate || *clusterInTerraformConfig.ProxyConfiguration.EnableProxy != *prevProxyConfiguration.EnableProxy
-	needsUpdate = needsUpdate || clusterInTerraformConfig.ProxyConfiguration.HTTPSProxy != prevProxyConfiguration.HTTPSProxy
-	needsUpdate = needsUpdate || *clusterInTerraformConfig.InstallTracingSupport != prevTracingSupport
-
-	if needsUpdate {
+func updateAgent(ctx context.Context, d *schema.ResourceData, updatedCluster *model.KubernetesCluster, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) error {
+	if !*updatedCluster.AutoUpdateEnabled {
 		log.Print("[DEBUG] updating agent")
+		context := d.Get(KubernetesClusterContextFieldName).(string)
 		err := deleteAgent(context)
 		if err != nil {
 			return err
 		}
-		err = installAgent(nil, serviceApi, httpClientWrapper, clusterId, context, multiClusterFolder, *clusterInTerraformConfig.InstallTracingSupport, tokenInjection, skipReadyCheck)
+		err = installAgent(ctx, serviceApi, httpClientWrapper, updatedCluster.ID, context, d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string),
+			d.Get(InstallTracingSupportFieldName).(bool), d.Get(TokenInjectionFieldName).(bool), d.Get(SkipReadyCheckFieldName).(bool))
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
+

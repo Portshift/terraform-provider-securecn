@@ -23,6 +23,9 @@ type KubernetesCluster struct {
 	// indicates fail close behavior on SecureCn agent failure
 	AgentFailClose *bool `json:"agentFailClose,omitempty"`
 
+	// indicates if the controller is updated. when false, reinstall is needed
+	AutoUpdateEnabled *bool `json:"autoUpdateEnabled,omitempty"`
+
 	// indicates whether apiIntelligenceDAST is enabled
 	APIIntelligenceDAST *bool `json:"apiIntelligenceDAST,omitempty"`
 
