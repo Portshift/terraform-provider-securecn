@@ -60,6 +60,7 @@ jobs:
         with:
           author_name: ben
           message: 'generate docs'
+          new_branch: ${GITHUB_REF##*/}
 
   # run acceptance tests in a matrix with Terraform core versions
   test:
