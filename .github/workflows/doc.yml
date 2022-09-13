@@ -1,0 +1,38 @@
+name: Build and Test
+on:
+  push:
+jobs:
+  doc:
+    name: Doc
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+
+      - name: Set up Go
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: '1.17'
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+
+      - name: Get dependencies
+        run: |
+          go mod download
+
+      - name: generate doc
+        run: |
+          go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
+
+      - name: generate doc
+        run: |
+          go generate
+
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        with:
+          author_name: ben
+          message: 'generate docs'
