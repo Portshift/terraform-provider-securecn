@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"terraform-provider-securecn/internal/client"
 	"terraform-provider-securecn/internal/escher_api/escherClient"
 	"terraform-provider-securecn/internal/escher_api/model"
@@ -49,7 +50,7 @@ const ExternalCAFieldName = "external_ca"
 const ExternalCAFieldNameId = "id"
 const ExternalCAFieldNameName = "name"
 const InternalRegistryFieldName = "internal_registry"
-const InternalRegistryFieldNameUrl = "InternalRegistryFieldNameUrl"
+const InternalRegistryFieldNameUrl = "url"
 const ServiceDiscoveryIsolationFieldName = "service_discovery_isolation"
 const TLSInspectionFieldName = "tls_inspection"
 const TokenInjectionFieldName = "token_injection"
@@ -346,14 +347,14 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 	}
 
 	if tokenInjection {
-		err = utils2.MakeExecutable(installationDir + "/" + vaultCertsGenFilePath)
+		err = utils2.MakeExecutable(filepath.Join(installationDir, vaultCertsGenFilePath))
 		if err != nil {
 			return err
 		}
 	}
 
 	if tracingEnabled {
-		err = utils2.MakeExecutable(installationDir + "/" + tracingCertsFilePath)
+		err = utils2.MakeExecutable(filepath.Join(installationDir,  tracingCertsFilePath))
 		if err != nil {
 			return err
 		}
@@ -366,7 +367,7 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 
 	defer os.Remove(kubeconfig)
 
-	output, err := utils2.ExecuteScript(installationDir + "/" + scriptFilePath, multiClusterFolder, skipReadyCheck, kubeconfig)
+	output, err := utils2.ExecuteScript(filepath.Join(installationDir, scriptFilePath), multiClusterFolder, skipReadyCheck, kubeconfig)
 	if err != nil {
 		return fmt.Errorf("%s:\n%s", err, output)
 	}
@@ -441,7 +442,7 @@ func createTempKubeconfig(context string) (string, error) {
 func downloadAndExtractBundle(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, installationDir string) error {
 	log.Print("[DEBUG] downloading and extracting bundle")
 
-	bundlePath := installationDir + "/" + secureCNBundleFilePath
+	bundlePath := filepath.Join(installationDir, secureCNBundleFilePath)
 
 	err := downloadInstallBundle(ctx, serviceApi, httpClientWrapper.HttpClient, clusterId, bundlePath)
 	if err != nil {
@@ -545,16 +546,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		}
 	}
 
-	url := utils2.ReadNestedStringFromTF(d, InternalRegistryFieldName, "InternalRegistryFieldNameUrl", 0)
-	if url != "" {
-		trueVar := true
-		cluster.InternalRegistryParameters = &model.InternalRegistryParameters{
-			InternalRegistryEnabled: &trueVar,
-			InternalRegistry:        url,
-		}
-	}
-
-	internalRegistryUrl := utils2.ReadNestedStringFromTF(d, InternalRegistryFieldName, "InternalRegistryFieldNameUrl", 0)
+	internalRegistryUrl := utils2.ReadNestedStringFromTF(d, InternalRegistryFieldName, InternalRegistryFieldNameUrl, 0)
 	if internalRegistryUrl != "" {
 		internalRegistryEnabled := true
 		cluster.InternalRegistryParameters = &model.InternalRegistryParameters{
