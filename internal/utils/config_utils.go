@@ -5,6 +5,22 @@ import (
 	"terraform-provider-securecn/internal/escher_api/model"
 )
 
+type KeyValue struct {
+	Key   string
+	Value interface{}
+}
+
+func GetTfMapFromKeyValuePairs(entries []KeyValue) []interface{} {
+	array := make([]interface{}, 1)
+	externalCa := make(map[string]interface{})
+
+	for _, entry := range entries {
+		externalCa[entry.Key] = entry.Value
+	}
+	array[0] = externalCa
+	return array
+}
+
 func ReadNestedListStringFromTF(d *schema.ResourceData, mainField string, subField string, index int) []string {
 	ipsData, exists := d.GetOk(mainField)
 
