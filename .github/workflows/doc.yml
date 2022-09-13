@@ -1,4 +1,4 @@
-name: Build and Test
+name: doc
 on:
   push:
 jobs:
