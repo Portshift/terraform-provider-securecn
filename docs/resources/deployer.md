@@ -17,25 +17,28 @@ A SecureCN deployer
 
 ### Required
 
-- **name** (String)
+- `name` (String)
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **operator_deployer** (Block List, Max: 1) Create and modify an operator deployer's properties (see [below for nested schema](#nestedblock--operator_deployer))
+- `operator_deployer` (Block List, Max: 1) Create and modify an operator deployer's properties (see [below for nested schema](#nestedblock--operator_deployer))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--operator_deployer"></a>
 ### Nested Schema for `operator_deployer`
 
 Required:
 
-- **cluster_id** (String) The id of the kubernetes cluster in SecureCN of this deployer
-- **namespace** (String) The namespace of the ServiceAccount of this deployer
-- **service_account** (String) The Kubernetes ServiceAccount name of the deployer
+- `cluster_id` (String) The id of the kubernetes cluster in SecureCN of this deployer
+- `namespace` (String) The namespace of the ServiceAccount of this deployer
+- `service_account` (String) The Kubernetes ServiceAccount name of the deployer
 
 Optional:
 
-- **rule_creation** (Boolean) Enable connection rule creation for this deployer
-- **security_check** (Boolean) Enable security checks for this deployer
+- `rule_creation` (Boolean) Enable connection rule creation for this deployer
+- `security_check` (Boolean) Enable security checks for this deployer
 
 

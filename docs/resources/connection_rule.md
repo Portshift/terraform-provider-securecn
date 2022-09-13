@@ -3,7 +3,7 @@
 page_title: "securecn_connection_rule Resource - terraform-provider-securecn"
 subcategory: ""
 description: |-
-A SecureCN k8s connection rule
+  A SecureCN k8s connection rule
 ---
 
 # securecn_connection_rule (Resource)
@@ -17,31 +17,34 @@ A SecureCN k8s connection rule
 
 ### Required
 
-- **rule_name** (String)
+- `rule_name` (String)
 
 ### Optional
 
-- **action** (String)
-- **destination_by_address_domain** (Block List, Max: 1) The destination match will match using domain names (see [below for nested schema](#nestedblock--destination_by_address_domain))
-- **destination_by_address_ip_range** (Block List, Max: 1) The destination match will match using ip ranges (see [below for nested schema](#nestedblock--destination_by_address_ip_range))
-- **destination_by_external** (Boolean) The destination will match on external connections
-- **destination_by_pod_any** (Block List, Max: 1) The destination will match on any pod (with given vulnerability severity (or higher) if configured) (see [below for nested schema](#nestedblock--destination_by_pod_any))
-- **destination_by_pod_label** (Block List, Max: 1) The destination will match using pod labels (see [below for nested schema](#nestedblock--destination_by_pod_label))
-- **destination_by_pod_name** (Block List, Max: 1) The destination will match using pod names (see [below for nested schema](#nestedblock--destination_by_pod_name))
-- **id** (String) The ID of this resource.
-- **source_by_external** (Boolean) The source will match on external connections
-- **source_by_ip_range** (Block List, Max: 1) The source will match using ip ranges (see [below for nested schema](#nestedblock--source_by_ip_range))
-- **source_by_pod_any** (Block List, Max: 1) The source will match on any pod (with given vulnerability severity (or higher) if configured) (see [below for nested schema](#nestedblock--source_by_pod_any))
-- **source_by_pod_label** (Block List, Max: 1) The source will match using pod labels (see [below for nested schema](#nestedblock--source_by_pod_label))
-- **source_by_pod_name** (Block List, Max: 1) The source will match using pod names (see [below for nested schema](#nestedblock--source_by_pod_name))
-- **status** (String)
+- `action` (String)
+- `destination_by_address_domain` (Block List, Max: 1) The destination match will match using domain names (see [below for nested schema](#nestedblock--destination_by_address_domain))
+- `destination_by_address_ip_range` (Block List, Max: 1) The destination match will match using ip ranges (see [below for nested schema](#nestedblock--destination_by_address_ip_range))
+- `destination_by_external` (Boolean) The destination will match on external connections
+- `destination_by_pod_any` (Block List, Max: 1) The destination will match on any pod (with given vulnerability severity (or higher) if configured) (see [below for nested schema](#nestedblock--destination_by_pod_any))
+- `destination_by_pod_label` (Block List, Max: 1) The destination will match using pod labels (see [below for nested schema](#nestedblock--destination_by_pod_label))
+- `destination_by_pod_name` (Block List, Max: 1) The destination will match using pod names (see [below for nested schema](#nestedblock--destination_by_pod_name))
+- `source_by_external` (Boolean) The source will match on external connections
+- `source_by_ip_range` (Block List, Max: 1) The source will match using ip ranges (see [below for nested schema](#nestedblock--source_by_ip_range))
+- `source_by_pod_any` (Block List, Max: 1) The source will match on any pod (with given vulnerability severity (or higher) if configured) (see [below for nested schema](#nestedblock--source_by_pod_any))
+- `source_by_pod_label` (Block List, Max: 1) The source will match using pod labels (see [below for nested schema](#nestedblock--source_by_pod_label))
+- `source_by_pod_name` (Block List, Max: 1) The source will match using pod names (see [below for nested schema](#nestedblock--source_by_pod_name))
+- `status` (String)
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--destination_by_address_domain"></a>
 ### Nested Schema for `destination_by_address_domain`
 
 Required:
 
-- **domains** (List of String)
+- `domains` (List of String)
 
 
 <a id="nestedblock--destination_by_address_ip_range"></a>
@@ -49,7 +52,7 @@ Required:
 
 Required:
 
-- **ips** (List of String)
+- `ips` (List of String)
 
 
 <a id="nestedblock--destination_by_pod_any"></a>
@@ -57,20 +60,21 @@ Required:
 
 Optional:
 
-- **vulnerability_severity_level** (String)
-- **environments** (List of String)
+- `environments` (List of String)
+- `vulnerability_severity_level` (String)
+
 
 <a id="nestedblock--destination_by_pod_label"></a>
 ### Nested Schema for `destination_by_pod_label`
 
 Required:
 
-- **labels** (Map of String)
+- `labels` (Map of String)
 
 Optional:
 
-- **vulnerability_severity_level** (String)
-- **environments** (List of String)
+- `environments` (List of String)
+- `vulnerability_severity_level` (String)
 
 
 <a id="nestedblock--destination_by_pod_name"></a>
@@ -78,12 +82,12 @@ Optional:
 
 Required:
 
-- **names** (List of String)
+- `names` (List of String)
 
 Optional:
 
-- **vulnerability_severity_level** (String)
-- **environments** (List of String)
+- `environments` (List of String)
+- `vulnerability_severity_level` (String)
 
 
 <a id="nestedblock--source_by_ip_range"></a>
@@ -91,7 +95,7 @@ Optional:
 
 Required:
 
-- **ips** (List of String)
+- `ips` (List of String)
 
 
 <a id="nestedblock--source_by_pod_any"></a>
@@ -99,30 +103,33 @@ Required:
 
 Optional:
 
-- **vulnerability_severity_level** (String)
-- **environments** (List of String)
+- `environments` (List of String)
+- `vulnerability_severity_level` (String)
+
 
 <a id="nestedblock--source_by_pod_label"></a>
 ### Nested Schema for `source_by_pod_label`
 
 Required:
 
-- **labels** (Map of String)
+- `labels` (Map of String)
 
 Optional:
 
-- **vulnerability_severity_level** (String)
-- **environments** (List of String)
+- `environments` (List of String)
+- `vulnerability_severity_level` (String)
+
 
 <a id="nestedblock--source_by_pod_name"></a>
 ### Nested Schema for `source_by_pod_name`
 
 Required:
 
-- **names** (List of String)
+- `names` (List of String)
 
 Optional:
 
-- **vulnerability_severity_level** (String)
-- **environments** (List of String)
+- `environments` (List of String)
+- `vulnerability_severity_level` (String)
+
 

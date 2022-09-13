@@ -17,25 +17,28 @@ A SecureCN CD policy
 
 ### Required
 
-- **deployers** (List of String)
-- **name** (String)
+- `deployers` (List of String)
+- `name` (String)
 
 ### Optional
 
-- **api_security_policy** (Block List, Max: 1) Specify the cd policy's api security profile (see [below for nested schema](#nestedblock--api_security_policy))
-- **description** (String)
-- **id** (String) The ID of this resource.
-- **permission_policy** (Block List, Max: 1) Specify the cd policy's permission check profile (see [below for nested schema](#nestedblock--permission_policy))
-- **secret_policy** (Block List, Max: 1) Specify the cd policy's secret check profile (see [below for nested schema](#nestedblock--secret_policy))
-- **security_context_policy** (Block List, Max: 1) Specify the cd policy's security context check profile (see [below for nested schema](#nestedblock--security_context_policy))
+- `api_security_policy` (Block List, Max: 1) Specify the cd policy's api security profile (see [below for nested schema](#nestedblock--api_security_policy))
+- `description` (String)
+- `permission_policy` (Block List, Max: 1) Specify the cd policy's permission check profile (see [below for nested schema](#nestedblock--permission_policy))
+- `secret_policy` (Block List, Max: 1) Specify the cd policy's secret check profile (see [below for nested schema](#nestedblock--secret_policy))
+- `security_context_policy` (Block List, Max: 1) Specify the cd policy's security context check profile (see [below for nested schema](#nestedblock--security_context_policy))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--api_security_policy"></a>
 ### Nested Schema for `api_security_policy`
 
 Required:
 
-- **api_security_profile** (String) The id of the api security profile to use for this api policy
-- **enforcement_option** (String) The enforcement type for this policy
+- `api_security_profile` (String) The id of the api security profile to use for this api policy
+- `enforcement_option` (String) The enforcement type for this policy
 
 
 <a id="nestedblock--permission_policy"></a>
@@ -43,8 +46,8 @@ Required:
 
 Required:
 
-- **enforcement_option** (String) The enforcement type for this policy
-- **permissible_vulnerability_level** (String) The level of risk accepted in this policy
+- `enforcement_option` (String) The enforcement type for this policy
+- `permissible_vulnerability_level` (String) The level of risk accepted in this policy
 
 
 <a id="nestedblock--secret_policy"></a>
@@ -52,8 +55,8 @@ Required:
 
 Required:
 
-- **enforcement_option** (String) The enforcement type for this policy
-- **permissible_vulnerability_level** (String) The level of risk accepted in this policy
+- `enforcement_option` (String) The enforcement type for this policy
+- `permissible_vulnerability_level` (String) The level of risk accepted in this policy
 
 
 <a id="nestedblock--security_context_policy"></a>
@@ -61,7 +64,7 @@ Required:
 
 Required:
 
-- **enforcement_option** (String) The enforcement type for this policy
-- **permissible_vulnerability_level** (String) The level of risk accepted in this policy
+- `enforcement_option` (String) The enforcement type for this policy
+- `permissible_vulnerability_level` (String) The level of risk accepted in this policy
 
 

@@ -17,22 +17,25 @@ A SecureCN CI policy
 
 ### Required
 
-- **name** (String)
+- `name` (String)
 
 ### Optional
 
-- **description** (String)
-- **dockerfile_scan_policy** (Block List, Max: 1) Specify the ci policy's dockerfile scan policy part (see [below for nested schema](#nestedblock--dockerfile_scan_policy))
-- **id** (String) The ID of this resource.
-- **vulnerability_policy** (Block List, Max: 1) Specify the ci policy's vulnerability policy part (see [below for nested schema](#nestedblock--vulnerability_policy))
+- `description` (String)
+- `dockerfile_scan_policy` (Block List, Max: 1) Specify the ci policy's dockerfile scan policy part (see [below for nested schema](#nestedblock--dockerfile_scan_policy))
+- `vulnerability_policy` (Block List, Max: 1) Specify the ci policy's vulnerability policy part (see [below for nested schema](#nestedblock--vulnerability_policy))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--dockerfile_scan_policy"></a>
 ### Nested Schema for `dockerfile_scan_policy`
 
 Required:
 
-- **enforcement_option** (String) The enforcement type for this policy
-- **permissible_dockerfile_scan_severity** (String) The scan result severity accepted in this policy
+- `enforcement_option` (String) The enforcement type for this policy
+- `permissible_dockerfile_scan_severity` (String) The scan result severity accepted in this policy
 
 
 <a id="nestedblock--vulnerability_policy"></a>
@@ -40,7 +43,7 @@ Required:
 
 Required:
 
-- **enforcement_option** (String) The enforcement type for this policy
-- **permissible_vulnerability_level** (String) The level of risk accepted in this policy
+- `enforcement_option` (String) The enforcement type for this policy
+- `permissible_vulnerability_level` (String) The level of risk accepted in this policy
 
 

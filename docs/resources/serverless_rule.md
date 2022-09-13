@@ -6,7 +6,7 @@ description: |-
   A SecureCN serverless rule
 ---
 
-# securecn_connection_rule (Resource)
+# securecn_serverless_rule (Resource)
 
 A SecureCN serverless rule
 
@@ -17,51 +17,58 @@ A SecureCN serverless rule
 
 ### Required
 
-- **rule_name** (String)
+- `rule_name` (String)
 
 ### Optional
 
-- **match_by_function_name** (Block List, Max: 1) The rule will match using names (see [below for nested schema](#nestedblock--match_by_function_name))
-- **match_by_function_arn** (Block List, Max: 1) The rule will match using arns (see [below for nested schema](#nestedblock--match_by_function_arn))
-- **match_by_function_any** (Block List, Max: 1) The rule will match on any function (see [below for nested schema](#nestedblock--match_by_function_any))
-- **id** (String) The ID of this resource.
-- **status** (String)
-- **scope** (Block List, Max: 1) define the scope (cloud accounts and regions) (see [below for nested schema](#nestedblock--operator_deployer))
+- `action` (String)
+- `match_by_function_any` (Boolean) The rule will match on any function
+- `match_by_function_arn` (Block List, Max: 1) The rule will match using function arns (see [below for nested schema](#nestedblock--match_by_function_arn))
+- `match_by_function_name` (Block List, Max: 1) The rule will match using function names (see [below for nested schema](#nestedblock--match_by_function_name))
+- `scope` (Block List) Scope defines the scope of this rule (see [below for nested schema](#nestedblock--scope))
+- `serverless_function_validation` (Block List, Max: 1) Define function security validations (see [below for nested schema](#nestedblock--serverless_function_validation))
+- `status` (String)
 
-<a id="nestedblock--match_by_function_name"></a>
-### Nested Schema for `match_by_function_name`
+### Read-Only
 
-Required:
-
-- **names** (List of String)
-
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--match_by_function_arn"></a>
 ### Nested Schema for `match_by_function_arn`
 
 Required:
 
-- **arns** (List of String)
+- `arns` (Map of String)
 
 
-<a id="nestedblock--match_by_function_any"></a>
-### Nested Schema for `match_by_function_any`
+<a id="nestedblock--match_by_function_name"></a>
+### Nested Schema for `match_by_function_name`
+
+Required:
+
+- `names` (List of String)
 
 
 <a id="nestedblock--scope"></a>
 ### Nested Schema for `scope`
 
-Required:
+Optional:
 
-- **cloud_account** (String)
-- **regions** (List of String)
-
-
+- `cloud_account` (String)
+- `regions` (List of String)
 
 
+<a id="nestedblock--serverless_function_validation"></a>
+### Nested Schema for `serverless_function_validation`
 
+Optional:
 
-
-
+- `data_access_risk` (String)
+- `function_permission_risk` (String)
+- `is_unused_function` (Boolean)
+- `publicly_accessible_risk` (String)
+- `risk` (String)
+- `secrets_risk` (String)
+- `vulnerability` (String)
 
 

@@ -17,27 +17,30 @@ A SecureCN deployment rule
 
 ### Required
 
-- **rule_name** (String)
+- `rule_name` (String)
 
 ### Optional
 
-- **action** (String)
-- **id** (String) The ID of this resource.
-- **match_by_pod_any** (Block List, Max: 1) The rule will match on any pod (see [below for nested schema](#nestedblock--match_by_pod_any))
-- **match_by_pod_label** (Block List, Max: 1) The rule will match using pod labels (see [below for nested schema](#nestedblock--match_by_pod_label))
-- **match_by_pod_name** (Block List, Max: 1) The rule will match using pod names (see [below for nested schema](#nestedblock--match_by_pod_name))
-- **scope** (String) Scope defines the scope of this rule
-- **status** (String)
+- `action` (String)
+- `match_by_pod_any` (Block List, Max: 1) The rule will match on any pod (see [below for nested schema](#nestedblock--match_by_pod_any))
+- `match_by_pod_label` (Block List, Max: 1) The rule will match using pod labels (see [below for nested schema](#nestedblock--match_by_pod_label))
+- `match_by_pod_name` (Block List, Max: 1) The rule will match using pod names (see [below for nested schema](#nestedblock--match_by_pod_name))
+- `scope` (String) Scope defines the scope of this rule
+- `status` (String)
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--match_by_pod_any"></a>
 ### Nested Schema for `match_by_pod_any`
 
 Optional:
 
-- **psp_on_violation_action** (String)
-- **psp_profile** (String)
-- **vulnerability_on_violation_action** (String)
-- **vulnerability_severity_level** (String)
+- `psp_on_violation_action` (String)
+- `psp_profile` (String)
+- `vulnerability_on_violation_action` (String)
+- `vulnerability_severity_level` (String)
 
 
 <a id="nestedblock--match_by_pod_label"></a>
@@ -45,14 +48,14 @@ Optional:
 
 Required:
 
-- **labels** (Map of String)
+- `labels` (Map of String)
 
 Optional:
 
-- **psp_on_violation_action** (String)
-- **psp_profile** (String)
-- **vulnerability_on_violation_action** (String)
-- **vulnerability_severity_level** (String)
+- `psp_on_violation_action` (String)
+- `psp_profile` (String)
+- `vulnerability_on_violation_action` (String)
+- `vulnerability_severity_level` (String)
 
 
 <a id="nestedblock--match_by_pod_name"></a>
@@ -60,13 +63,13 @@ Optional:
 
 Required:
 
-- **names** (List of String)
+- `names` (List of String)
 
 Optional:
 
-- **psp_on_violation_action** (String)
-- **psp_profile** (String)
-- **vulnerability_on_violation_action** (String)
-- **vulnerability_severity_level** (String)
+- `psp_on_violation_action` (String)
+- `psp_profile` (String)
+- `vulnerability_on_violation_action` (String)
+- `vulnerability_severity_level` (String)
 
 
