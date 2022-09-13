@@ -17,24 +17,27 @@ A SecureCN environment
 
 ### Required
 
-- **kubernetes_environment** (Block List, Min: 1) The kubernetes environments to include in the SecureCN env (see [below for nested schema](#nestedblock--kubernetes_environment))
-- **name** (String)
+- `kubernetes_environment` (Block List, Min: 1) The kubernetes environments to include in the SecureCN env (see [below for nested schema](#nestedblock--kubernetes_environment))
+- `name` (String)
 
 ### Optional
 
-- **description** (String)
-- **id** (String) The ID of this resource.
+- `description` (String)
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--kubernetes_environment"></a>
 ### Nested Schema for `kubernetes_environment`
 
 Required:
 
-- **cluster_name** (String) The name of the kubernetes cluster in SecureCN
+- `cluster_name` (String) The name of the kubernetes cluster in SecureCN
 
 Optional:
 
-- **namespaces_by_labels** (Map of String) The source will match using namespace labels
-- **namespaces_by_names** (List of String) The env will match using namespace name
+- `namespaces_by_labels` (Map of String) The source will match using namespace labels
+- `namespaces_by_names` (List of String) The env will match using namespace name
 
 

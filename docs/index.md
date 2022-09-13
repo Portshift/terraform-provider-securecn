@@ -17,6 +17,6 @@ description: |-
 
 ### Optional
 
-- **access_key** (String, Sensitive) SecureCN service account access key to authenticate with
-- **secret_key** (String, Sensitive) SecureCN service account secret key to authenticate with
-- **server_url** (String) SecureCN server URL
+- `access_key` (String, Sensitive) SecureCN service account access key to authenticate with
+- `secret_key` (String, Sensitive) Appsecurity service account secret key to authenticate with
+- `server_url` (String) Appsecurity server URL
