@@ -48,11 +48,11 @@ jobs:
 
       - name: install tfplugindocs
         run: |
-        go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
+          go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
 
       - name: generate doc
         run: |
-        go generate
+          go generate
 
       # This step will evaluate the repo status and exit if found changes
       # This should detect if the most up-to-date WASM binary was pushed
