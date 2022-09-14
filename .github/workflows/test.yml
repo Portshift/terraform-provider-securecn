@@ -57,11 +57,11 @@ jobs:
 
       # This step will evaluate the repo status and exit if found changes
       # This should detect if the most up-to-date WASM binary was pushed
-    - name: Changes validation
-      run: |
-        [[ -z "$(git status --porcelain)" ]] || echo "terraform documentation has not been generated. please run:
-        go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
-        go generate" && exit 1
+      - name: Changes validation
+        run: |
+          [[ -z "$(git status --porcelain)" ]] || echo "terraform documentation has not been generated. please run:
+          go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
+          go generate" && exit 1
 
 
   # run acceptance tests in a matrix with Terraform core versions
