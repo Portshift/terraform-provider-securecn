@@ -33,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+
       - name: Set up Go
         uses: actions/setup-go@v2.1.3
         with:
@@ -58,7 +59,10 @@ jobs:
       # This should detect if the most up-to-date WASM binary was pushed
     - name: Changes validation
       run: |
-        [[ -z "$(git status --porcelain)" ]] || exit 1
+        [[ -z "$(git status --porcelain)" ]] || echo "terraform documentation has not been generated. please run:
+        go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
+        go generate" && exit 1
+
 
   # run acceptance tests in a matrix with Terraform core versions
   test:
