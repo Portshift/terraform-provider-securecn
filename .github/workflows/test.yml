@@ -51,6 +51,7 @@ jobs:
         run: |
           go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
 
+
       - name: generate doc
         run: |
           go generate
@@ -59,10 +60,13 @@ jobs:
       # This should detect if the most up-to-date WASM binary was pushed
       - name: Changes validation
         run: |
-          [[ -z "$(git status --porcelain)" ]] || echo "terraform documentation has not been generated. please run:
-          go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
-          go generate" && exit 1
-
+          if [[ ! -z "$(git status --porcelain)" ]]
+          then
+            echo "terraform documentation has not been generated. please run:
+            go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
+            go generate"
+            exit 1
+          fi
 
   # run acceptance tests in a matrix with Terraform core versions
   test:
