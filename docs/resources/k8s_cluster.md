@@ -17,7 +17,7 @@ A SecureCN k8s cluster
 
 ### Required
 
-- `kubernetes_cluster_context` (String) ben!!!!!!    The k8s context name of the cluster
+- `kubernetes_cluster_context` (String) The k8s context name of the cluster
 - `name` (String) The name of cluster in SecureCN
 
 ### Optional
