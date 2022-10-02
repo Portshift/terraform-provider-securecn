@@ -110,13 +110,11 @@ jobs:
       env:
         TF_ACC: "1"
         TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform }}
+        TF_LOG: "DEBUG"
         SECURECN_ACCESS_KEY: ${{ secrets.SECURECN_ACCESS_KEY }}
         SECURECN_SECRET_KEY: ${{ secrets.SECURECN_SECRET_KEY }}
         SECURECN_SERVER_URL: ${{ secrets.SECURECN_SERVER_URL }}
       run: |
-
-        echo ${{secrets.SECURECN_SERVER_URL}} | sed 's/./& /g'
-
         sed -i.bak 's/Portshift\/securecn/cisco.com\/Portshift\/securecn/' main.tf
         terraform init
         terraform apply --auto-approve
