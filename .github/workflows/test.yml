@@ -103,6 +103,7 @@ jobs:
         kind create cluster --config .kind.yml --wait 5m
         kubectl describe nodes
         kubectl apply -f https://raw.githubusercontent.com/banzaicloud/bank-vaults/master/operator/deploy/rbac.yaml
+        kubectl version
 
     - name: TF acceptance tests
       timeout-minutes: 10
