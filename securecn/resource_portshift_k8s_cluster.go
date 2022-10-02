@@ -601,15 +601,6 @@ func downloadInstallBundle(ctx context.Context, serviceApi *escherClient.MgmtSer
 func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.KubernetesCluster) {
 	log.Print("[DEBUG] updating mutable fields agent")
 
-	if secureCNCluster.IstioIngressAnnotations != nil {
-		for _, annotation := range secureCNCluster.IstioIngressAnnotations {
-			log.Print("[DEBUG] istio annotaion: " + *annotation.Key + " " + *annotation.Value)
-		}
-	} else {
-		log.Print("[DEBUG] istio annotaion is null ")
-	}
-
-
 	_ = d.Set(NameFieldName, secureCNCluster.Name)
 	_ = d.Set(CiImageValidationFieldName, secureCNCluster.CiImageValidation)
 	_ = d.Set(CdPodTemplateFieldName, secureCNCluster.ClusterPodDefinitionSource == "CD")
@@ -628,7 +619,9 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(ServiceDiscoveryIsolationFieldName, secureCNCluster.ServiceDiscoveryIsolationEnabled)
 	_ = d.Set(RestrictRegistriesFieldName, secureCNCluster.RestrictRegistires)
 	_ = d.Set(IstioIngressEnabledFieldName, secureCNCluster.IsIstioIngressEnabled)
-	_ = d.Set(IstioIngressAnnotationsFieldName, secureCNCluster.IstioIngressAnnotations)
+	if secureCNCluster.IstioIngressAnnotations != nil {
+		_ = d.Set(IstioIngressAnnotationsFieldName, secureCNCluster.IstioIngressAnnotations)
+	}
 	_ = d.Set(EnableApiIntelligenceDASTFieldName, secureCNCluster.APIIntelligenceDAST)
 	_ = d.Set(EnableAutoLabelFieldName, secureCNCluster.AutoLabelEnabled)
 	_ = d.Set(HoldApplicationUntilProxyStartsFieldName, secureCNCluster.IsHoldApplicationUntilProxyStarts)
