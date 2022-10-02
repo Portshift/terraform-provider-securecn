@@ -119,16 +119,16 @@ jobs:
         terraform init
         terraform apply --auto-approve
 
-    - name: TF destroy
-      if: ${{ always() }}
-      working-directory: ./examples
-      env:
-        TF_ACC: "1"
-        TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform }}
-        SECURECN_ACCESS_KEY: ${{ secrets.SECURECN_ACCESS_KEY }}
-        SECURECN_SECRET_KEY: ${{ secrets.SECURECN_SECRET_KEY }}
-        SECURECN_SERVER_URL: ${{ secrets.SECURECN_SERVER_URL }}
-      run: |
-        kubectl get pods --all-namespaces
-        kubectl describe pod -n portshift -l app=portshift-agent
-        terraform destroy --auto-approve
+#    - name: TF destroy
+#      if: ${{ always() }}
+#      working-directory: ./examples
+#      env:
+#        TF_ACC: "1"
+#        TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform }}
+#        SECURECN_ACCESS_KEY: ${{ secrets.SECURECN_ACCESS_KEY }}
+#        SECURECN_SECRET_KEY: ${{ secrets.SECURECN_SECRET_KEY }}
+#        SECURECN_SERVER_URL: ${{ secrets.SECURECN_SERVER_URL }}
+#      run: |
+#        kubectl get pods --all-namespaces
+#        kubectl describe pod -n portshift -l app=portshift-agent
+#        terraform destroy --auto-approve
