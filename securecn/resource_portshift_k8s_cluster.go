@@ -622,9 +622,7 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(ServiceDiscoveryIsolationFieldName, secureCNCluster.ServiceDiscoveryIsolationEnabled)
 	_ = d.Set(RestrictRegistriesFieldName, secureCNCluster.RestrictRegistires)
 	_ = d.Set(IstioIngressEnabledFieldName, secureCNCluster.IsIstioIngressEnabled)
-	//if secureCNCluster.IstioIngressAnnotations != nil {
-	istioAnnotations(d, secureCNCluster)
-	//}
+	_ = d.Set(IstioIngressAnnotationsFieldName, getIstioAnnotationsMap(secureCNCluster))
 	_ = d.Set(EnableApiIntelligenceDASTFieldName, secureCNCluster.APIIntelligenceDAST)
 	_ = d.Set(EnableAutoLabelFieldName, secureCNCluster.AutoLabelEnabled)
 	_ = d.Set(HoldApplicationUntilProxyStartsFieldName, secureCNCluster.IsHoldApplicationUntilProxyStarts)
@@ -646,7 +644,7 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 		{SidecarResourcesFieldNameProxyRequestsMemory, secureCNCluster.SidecarsResources.ProxyRequestMemory}}))
 }
 
-func istioAnnotations(d *schema.ResourceData, secureCNCluster *model.KubernetesCluster) {
+func getIstioAnnotationsMap(secureCNCluster *model.KubernetesCluster) map[string]string {
 	annotationsInSecureCN := secureCNCluster.IstioIngressAnnotations
 	annotations := make(map[string]string, len(annotationsInSecureCN))
 	for _, annotation := range annotationsInSecureCN {
@@ -655,7 +653,7 @@ func istioAnnotations(d *schema.ResourceData, secureCNCluster *model.KubernetesC
 		annotations[*keyInSecureCn] = *valueInSecureCn
 	}
 
-	_ = d.Set(IstioIngressAnnotationsFieldName, annotations)
+	return annotations
 }
 
 func validateConfig(d *schema.ResourceData) error {
