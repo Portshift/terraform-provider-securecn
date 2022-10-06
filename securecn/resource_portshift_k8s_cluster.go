@@ -619,9 +619,9 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(ServiceDiscoveryIsolationFieldName, secureCNCluster.ServiceDiscoveryIsolationEnabled)
 	_ = d.Set(RestrictRegistriesFieldName, secureCNCluster.RestrictRegistires)
 	_ = d.Set(IstioIngressEnabledFieldName, secureCNCluster.IsIstioIngressEnabled)
-	if secureCNCluster.IstioIngressAnnotations != nil {
+	//if secureCNCluster.IstioIngressAnnotations != nil {
 		_ = d.Set(IstioIngressAnnotationsFieldName, secureCNCluster.IstioIngressAnnotations)
-	}
+	//}
 	_ = d.Set(EnableApiIntelligenceDASTFieldName, secureCNCluster.APIIntelligenceDAST)
 	_ = d.Set(EnableAutoLabelFieldName, secureCNCluster.AutoLabelEnabled)
 	_ = d.Set(HoldApplicationUntilProxyStartsFieldName, secureCNCluster.IsHoldApplicationUntilProxyStarts)
