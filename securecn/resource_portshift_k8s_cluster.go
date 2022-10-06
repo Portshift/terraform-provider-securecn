@@ -92,7 +92,10 @@ func ResourceCluster() *schema.Resource {
 			IstioAlreadyInstalledFieldName:            {Type: schema.TypeBool, Optional: true, Default: false, Description: "if false, istio will be installed, otherwise the controller will use the previously installed istio"},
 			IstioVersionFieldName:                     {Type: schema.TypeString, Optional: true, Default: nil, Computed: true, Description: "if istio already installed, this specifies its version"},
 			IstioIngressEnabledFieldName:              {Type: schema.TypeBool, Optional: true, Computed: true, Description: "If installing Istio, use Istio ingress"},
-			IstioIngressAnnotationsFieldName:          {Type: schema.TypeMap, Elem: schema.TypeString, Optional: true, Default: map[string]string{}, Description: "If enabling Istio ingress, use Istio these ingress annotation"},
+			IstioIngressAnnotationsFieldName:          {Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				}, Optional: true, Description: "If enabling Istio ingress, use Istio these ingress annotation"},
 			MultiClusterCommunicationSupportFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "Enable multi cluster communication"},
 			MultiClusterCommunicationSupportCertsPathFieldName: {Type: schema.TypeString, Optional: true, Default: "", Description: "Multi cluster certs path. Only valid if " + MultiClusterCommunicationSupportFieldName + " is true",
 				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
@@ -620,7 +623,7 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(RestrictRegistriesFieldName, secureCNCluster.RestrictRegistires)
 	_ = d.Set(IstioIngressEnabledFieldName, secureCNCluster.IsIstioIngressEnabled)
 	//if secureCNCluster.IstioIngressAnnotations != nil {
-		_ = d.Set(IstioIngressAnnotationsFieldName, secureCNCluster.IstioIngressAnnotations)
+	istioAnnotations(d, secureCNCluster)
 	//}
 	_ = d.Set(EnableApiIntelligenceDASTFieldName, secureCNCluster.APIIntelligenceDAST)
 	_ = d.Set(EnableAutoLabelFieldName, secureCNCluster.AutoLabelEnabled)
@@ -641,6 +644,18 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 		{SidecarResourcesFieldNameProxyLimitsMemory, secureCNCluster.SidecarsResources.ProxyLimitsMemory},
 		{SidecarResourcesFieldNameProxyRequestsCpu, secureCNCluster.SidecarsResources.ProxyRequestCPU},
 		{SidecarResourcesFieldNameProxyRequestsMemory, secureCNCluster.SidecarsResources.ProxyRequestMemory}}))
+}
+
+func istioAnnotations(d *schema.ResourceData, secureCNCluster *model.KubernetesCluster) {
+	annotationsInSecureCN := secureCNCluster.IstioIngressAnnotations
+	annotations := make(map[string]string, len(annotationsInSecureCN))
+	for _, annotation := range annotationsInSecureCN {
+		keyInSecureCn := annotation.Key
+		valueInSecureCn := annotation.Value
+		annotations[*keyInSecureCn] = *valueInSecureCn
+	}
+
+	_ = d.Set(IstioIngressAnnotationsFieldName, annotations)
 }
 
 func validateConfig(d *schema.ResourceData) error {
