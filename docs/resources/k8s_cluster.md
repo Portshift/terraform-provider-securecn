@@ -36,7 +36,7 @@ A SecureCN k8s cluster
 - `install_tracing_support` (Boolean) Indicates whether to install tracing support, enable for apiSecurity accounts.
 - `internal_registry` (Block List, Max: 1) Use an internal container registry for this cluster (see [below for nested schema](#nestedblock--internal_registry))
 - `istio_already_installed` (Boolean) if false, istio will be installed, otherwise the controller will use the previously installed istio
-- `istio_ingress_annotations` (Map of String) If enabling Istio ingress, use Istio these ingress annotation
+- `istio_ingress_annotations` (Map of String) when enabling Istio ingress, use these Istio ingress annotations
 - `istio_ingress_enabled` (Boolean) If installing Istio, use Istio ingress
 - `istio_version` (String) if istio already installed, this specifies its version
 - `minimum_replicas` (Number) minimum number of controller replicas
