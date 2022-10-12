@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     securecn = {
-      source = "Portshift/securecn"
+      source  = "Portshift/securecn"
       version = ">= 1.1.0"
     }
   }
@@ -21,8 +21,7 @@ resource "securecn_trusted_signer" "securecn_trusted_signer" {
   name = "terraform_trusted_signer"
 
   keys = {
-    key33 = "value33"
-    key44 = "value44"
+    abc = "-----BEGIN PUBLIC KEY-----\nMFswDQYJKoZIhvcNAQEBBQADSgAwRwJAZpsX0qkoC27gXwjmFHZgKbPKsDbhIgXL\nSxPH4H3Izn8PfShie/dsJnm7LI6YcPnfmjFVdtZUF/y9nNjBor4WewIDAQAB\n-----END PUBLIC KEY-----"
   }
 
   clusters = [securecn_k8s_cluster.terraform_cluster.id]
@@ -85,12 +84,12 @@ resource "securecn_connection_rule" "securecn_connection_rule" {
 
   source_by_pod_any {
     vulnerability_severity_level = "HIGH"
-    environments = [securecn_environment.env1.name]
+    environments                 = [securecn_environment.env1.name]
   }
 
   destination_by_pod_any {
     vulnerability_severity_level = "HIGH"
-    environments = [securecn_environment.env1.name]
+    environments                 = [securecn_environment.env1.name]
   }
 }
 
