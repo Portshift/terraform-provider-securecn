@@ -186,8 +186,8 @@ func getTrustedSignerKeysFromConfig(d *schema.ResourceData) []*model2.TrustedSig
 	for k, v := range keysMap {
 		value := v.(string)
 		key := &model2.TrustedSignerKey{
-			Key:  &k,
-			Name: &value,
+			Key:  &value,
+			Name: &k,
 		}
 		keys = append(keys, key)
 	}
