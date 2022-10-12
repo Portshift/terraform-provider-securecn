@@ -95,7 +95,7 @@ func ResourceCluster() *schema.Resource {
 			IstioIngressAnnotationsFieldName:          {Type: schema.TypeMap,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
-				}, Optional: true, Description: "If enabling Istio ingress, use Istio these ingress annotation"},
+				}, Optional: true, Description: "when enabling Istio ingress, use these Istio ingress annotations"},
 			MultiClusterCommunicationSupportFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "Enable multi cluster communication"},
 			MultiClusterCommunicationSupportCertsPathFieldName: {Type: schema.TypeString, Optional: true, Default: "", Description: "Multi cluster certs path. Only valid if " + MultiClusterCommunicationSupportFieldName + " is true",
 				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
