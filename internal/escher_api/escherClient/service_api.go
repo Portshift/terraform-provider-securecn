@@ -452,7 +452,7 @@ func (serviceMgmtApi *MgmtServiceApiCtx) UpdateServerlessRule(ctx context.Contex
 }
 
 func (serviceMgmtApi *MgmtServiceApiCtx) DeleteKubernetesCluster(ctx context.Context, client *http.Client, clusterId strfmt.UUID) error {
-	log.Print("[DEBUG] deleting cluster")
+	log.Print("[DEBUG] deleting cluster in panoptica")
 
 	params := &model.DeleteKubernetesClustersKubernetesClusterIDParams{
 		KubernetesClusterID: clusterId,

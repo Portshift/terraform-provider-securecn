@@ -30,6 +30,8 @@ const scriptFilePath = "install_bundle.sh"
 const vaultCertsGenFilePath = "certs_gen_vault.sh"
 const tracingCertsFilePath = "certs_gen_tracing.sh"
 const uninstallAgentCommandFormat = "KUBECONFIG=%s kubectl get cm -n portshift portshift-uninstaller -o jsonpath='{.data.config}' | KUBECONFIG=%s bash"
+const getPortshiftPodsFormat = "KUBECONFIG=%s kubectl get pods -n portshift"
+const describePortshiftPodsFormat = "KUBECONFIG=%s kubectl describe pods -n portshift"
 const useK8sContextCommandFormat = "kubectl config use-context"
 const viewK8sConfigCommand = "kubectl config view --raw"
 
@@ -246,7 +248,20 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	err = installAgent(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext, multiClusterFolder, tracingEnabled, tokenInjection, skipReadyCheck)
 	if err != nil {
-		_ = serviceApi.DeleteKubernetesCluster(ctx, httpClientWrapper.HttpClient, clusterId)
+
+		deleteClusterError := serviceApi.DeleteKubernetesCluster(ctx, httpClientWrapper.HttpClient, clusterId)
+		if deleteClusterError != nil {
+			log.Println("[WARN] failed to remove cluster from Panoptica:")
+			log.Println(deleteClusterError)
+		}
+
+		_ = printPortshiftNamespaceBeforeDeletingController(k8sContext)
+		deleteAgentError := deleteAgent(k8sContext)
+		if deleteAgentError != nil {
+			log.Println("[WARN] failed to uninstall controller: ")
+			log.Println(deleteAgentError)
+		}
+
 		return diag.FromErr(err)
 	}
 
@@ -313,10 +328,8 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	log.Print("[DEBUG] deleting cluster")
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
-
 	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	clusterId := strfmt.UUID(d.Id())
-
 	k8sContext := d.Get(KubernetesClusterContextFieldName).(string)
 	err := deleteAgent(k8sContext)
 	if err != nil {
@@ -372,6 +385,7 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 
 	output, err := utils2.ExecuteScript(filepath.Join(installationDir, scriptFilePath), multiClusterFolder, skipReadyCheck, kubeconfig)
 	if err != nil {
+		log.Print("[DEBUG] controller installation failed")
 		return fmt.Errorf("%s:\n%s", err, output)
 	}
 
@@ -384,6 +398,22 @@ func removeDirectory(installationDir string) error{
 		log.Print("[DEBUG] failed to delete " + installationDir)
 		return err
 	}
+	return nil
+}
+
+func printPortshiftNamespaceBeforeDeletingController(context string) error  {
+	kubeconfig, err := createTempKubeconfig(context)
+	if err != nil {
+		return err
+	}
+
+	defer os.Remove(kubeconfig)
+	getPodsResult, _ := utils2.ExecBashCommand(fmt.Sprintf(getPortshiftPodsFormat, kubeconfig))
+	log.Printf("[INFO] get pods result: \n" + getPodsResult)
+
+	describePodsResult, _ := utils2.ExecBashCommand(fmt.Sprintf(describePortshiftPodsFormat, kubeconfig))
+	log.Printf("[INFO] describe pods result: \n" + describePodsResult)
+
 	return nil
 }
 
