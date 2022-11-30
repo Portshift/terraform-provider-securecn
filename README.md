@@ -2,7 +2,7 @@
 
 [![Build and Test](https://github.com/Portshift/terraform-provider-securecn/actions/workflows/test.yml/badge.svg)](https://github.com/Portshift/terraform-provider-securecn/actions/workflows/test.yml)
 
-- [Provider Documentation Website](https://appsecurity.readme.io/docs/terraform-provider)
+- [Provider Documentation Website](https://panoptica.readme.io/docs/terraform-provider)
 - [Provider Terraform Registry Page](https://registry.terraform.io/providers/Portshift/securecn/latest)
 
 <img src="https://raw.githubusercontent.com/hashicorp/terraform-website/master/public/img/logo-hashicorp.svg" width="600px">
