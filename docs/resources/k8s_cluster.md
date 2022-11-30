@@ -45,6 +45,7 @@ A SecureCN k8s cluster
 - `orchestration_type` (String) Orchestration type of the kubernetes cluster
 - `persistent_storage` (Boolean) Allow SecureCN agent to save the policy persistently, so it will be available after a restart of the pod. This will Require 128MB of storage for the agent pod.
 - `restrict_registries` (Boolean) Workload from untrusted registries will be marked as 'unknown'
+- `rollback_on_controller_failure` (Boolean) delete cluster on controller installation failure. default = true
 - `service_discovery_isolation` (Boolean) Indicates whether the service discovery isolation is enabled
 - `sidecar_resources` (Block List, Max: 1) Define resource limits for Istio sidecars (see [below for nested schema](#nestedblock--sidecar_resources))
 - `skip_ready_check` (Boolean) Indicates whether the cluster installation should be async
