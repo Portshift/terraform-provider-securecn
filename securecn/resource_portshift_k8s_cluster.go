@@ -16,6 +16,7 @@ import (
 	"terraform-provider-securecn/internal/escher_api/escherClient"
 	"terraform-provider-securecn/internal/escher_api/model"
 	utils2 "terraform-provider-securecn/internal/utils"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -30,6 +31,8 @@ const scriptFilePath = "install_bundle.sh"
 const vaultCertsGenFilePath = "certs_gen_vault.sh"
 const tracingCertsFilePath = "certs_gen_tracing.sh"
 const uninstallAgentCommandFormat = "KUBECONFIG=%s kubectl get cm -n portshift portshift-uninstaller -o jsonpath='{.data.config}' | KUBECONFIG=%s bash"
+const getPortshiftPodsFormat = "KUBECONFIG=%s kubectl get pods -n portshift"
+const describePortshiftPodsFormat = "KUBECONFIG=%s kubectl describe pods -n portshift"
 const useK8sContextCommandFormat = "kubectl config use-context"
 const viewK8sConfigCommand = "kubectl config view --raw"
 
@@ -55,6 +58,7 @@ const ServiceDiscoveryIsolationFieldName = "service_discovery_isolation"
 const TLSInspectionFieldName = "tls_inspection"
 const TokenInjectionFieldName = "token_injection"
 const SkipReadyCheckFieldName = "skip_ready_check"
+const RollbackOnControllerFailureFieldName = "rollback_on_controller_failure"
 const InstallTracingSupportFieldName = "install_tracing_support"
 const SidecarResourcesFieldName = "sidecar_resources"
 const SidecarResourcesFieldNameProxyInitLimitsCpu = "proxy_init_limits_cpu"
@@ -122,6 +126,7 @@ func ResourceCluster() *schema.Resource {
 			TLSInspectionFieldName:                   {Type: schema.TypeBool, Optional: true, Computed: true, Description: "Indicates whether the TLS inspection is enabled"},
 			TokenInjectionFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the token injection is enabled"},
 			SkipReadyCheckFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the cluster installation should be async"},
+			RollbackOnControllerFailureFieldName:     {Type: schema.TypeBool, Optional: true, Default: true,  Description: "delete cluster on controller installation failure. default = true"},
 			InstallTracingSupportFieldName:           {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install tracing support, enable for apiSecurity accounts."},
 			ExternalCAFieldName: {
 				Description: "Use an external CA for this cluster",
@@ -242,16 +247,38 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	multiClusterFolder := d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string)
 	tokenInjection := d.Get(TokenInjectionFieldName).(bool)
 	skipReadyCheck := d.Get(SkipReadyCheckFieldName).(bool)
+	rollbackOnFailure := d.Get(RollbackOnControllerFailureFieldName).(bool)
 	tracingEnabled := d.Get(InstallTracingSupportFieldName).(bool)
 
-	err = installAgent(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext, multiClusterFolder, tracingEnabled, tokenInjection, skipReadyCheck)
+	err = installAgentWithTimeout(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext, multiClusterFolder, tracingEnabled, tokenInjection, skipReadyCheck)
 	if err != nil {
-		_ = serviceApi.DeleteKubernetesCluster(ctx, httpClientWrapper.HttpClient, clusterId)
-		return diag.FromErr(err)
+		log.Println("[ERROR] Panoptica controller installation has failed")
+		if rollbackOnFailure {
+			rollBackOnAgentInstallationFailure(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext)
+			return diag.FromErr(err)
+		} else {
+			log.Println("[ERROR] error while installing Panoptica controller. " +
+				"environment remains up for debug according to 'rollback_on_controller_failure' field")
+		}
 	}
 
 	d.SetId(string(clusterId))
 	return resourceClusterRead(ctx, d, m)
+}
+
+func rollBackOnAgentInstallationFailure(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, k8sContext string) {
+	deleteClusterError := serviceApi.DeleteKubernetesCluster(ctx, httpClientWrapper.HttpClient, clusterId)
+	if deleteClusterError != nil {
+		log.Println("[WARN] failed to remove cluster from Panoptica:")
+		log.Println(deleteClusterError)
+	}
+
+	_ = printPortshiftNamespaceBeforeDeletingController(k8sContext)
+	deleteAgentError := deleteAgent(k8sContext)
+	if deleteAgentError != nil {
+		log.Println("[WARN] failed to uninstall controller: ")
+		log.Println(deleteAgentError)
+	}
 }
 
 func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -313,10 +340,8 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	log.Print("[DEBUG] deleting cluster")
 
 	httpClientWrapper := m.(client.HttpClientWrapper)
-
 	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	clusterId := strfmt.UUID(d.Id())
-
 	k8sContext := d.Get(KubernetesClusterContextFieldName).(string)
 	err := deleteAgent(k8sContext)
 	if err != nil {
@@ -372,10 +397,24 @@ func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCt
 
 	output, err := utils2.ExecuteScript(filepath.Join(installationDir, scriptFilePath), multiClusterFolder, skipReadyCheck, kubeconfig)
 	if err != nil {
+		log.Print("[DEBUG] controller installation failed")
 		return fmt.Errorf("%s:\n%s", err, output)
 	}
 
 	return nil
+}
+
+func installAgentWithTimeout(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, context string, multiClusterFolder string, tracingEnabled bool, tokenInjection bool, skipReadyCheck bool) error {
+	err := make(chan error, 1)
+	go func() {
+		err <- installAgent(ctx, serviceApi, httpClientWrapper, clusterId, context, multiClusterFolder, tracingEnabled, tokenInjection, skipReadyCheck)
+	}()
+	select {
+	case <-time.After(15 * time.Minute):
+		return errors.New("timed out during Panoptica controller installation process")
+	case err := <-err:
+		return err
+	}
 }
 
 func removeDirectory(installationDir string) error{
@@ -384,6 +423,22 @@ func removeDirectory(installationDir string) error{
 		log.Print("[DEBUG] failed to delete " + installationDir)
 		return err
 	}
+	return nil
+}
+
+func printPortshiftNamespaceBeforeDeletingController(context string) error  {
+	kubeconfig, err := createTempKubeconfig(context)
+	if err != nil {
+		return err
+	}
+
+	defer os.Remove(kubeconfig)
+	getPodsResult, _ := utils2.ExecBashCommand(fmt.Sprintf(getPortshiftPodsFormat, kubeconfig))
+	log.Printf("[DEBUG] get pods result: \n" + getPodsResult)
+
+	describePodsResult, _ := utils2.ExecBashCommand(fmt.Sprintf(describePortshiftPodsFormat, kubeconfig))
+	log.Printf("[DEBUG] describe pods result: \n" + describePodsResult)
+
 	return nil
 }
 
@@ -686,8 +741,7 @@ func updateAgent(ctx context.Context, d *schema.ResourceData, updatedCluster *mo
 		if err != nil {
 			return err
 		}
-		err = installAgent(ctx, serviceApi, httpClientWrapper, updatedCluster.ID, context, d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string),
-			d.Get(InstallTracingSupportFieldName).(bool), d.Get(TokenInjectionFieldName).(bool), d.Get(SkipReadyCheckFieldName).(bool))
+		err = installAgentWithTimeout(ctx, serviceApi, httpClientWrapper, updatedCluster.ID, context, d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string), d.Get(InstallTracingSupportFieldName).(bool), d.Get(TokenInjectionFieldName).(bool), d.Get(SkipReadyCheckFieldName).(bool))
 		if err != nil {
 			return err
 		}
