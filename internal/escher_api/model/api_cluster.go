@@ -111,6 +111,8 @@ type KubernetesCluster struct {
 
 	// indicates whether ci image signer validation is Enabled
 	CiImageSignatureValidation *bool `json:"ciImageSignatureValidation,omitempty"`
+
+	SupportExternalTraceSource *bool `json:"supportExternalTraceSource,omitempty"`
 }
 
 // Validate validates this kubernetes cluster
