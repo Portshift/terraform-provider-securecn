@@ -49,6 +49,7 @@ A SecureCN k8s cluster
 - `service_discovery_isolation` (Boolean) Indicates whether the service discovery isolation is enabled
 - `sidecar_resources` (Block List, Max: 1) Define resource limits for Istio sidecars (see [below for nested schema](#nestedblock--sidecar_resources))
 - `skip_ready_check` (Boolean) Indicates whether the cluster installation should be async
+- `support_external_trace_source` (Boolean) indicates whether external trace sources are supported
 - `tls_inspection` (Boolean) Indicates whether the TLS inspection is enabled
 - `token_injection` (Boolean) Indicates whether the token injection is enabled
 
