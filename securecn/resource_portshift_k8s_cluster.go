@@ -666,25 +666,34 @@ func downloadInstallBundle(ctx context.Context, serviceApi *escherClient.MgmtSer
 }
 
 func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.KubernetesCluster) {
-	log.Print("[DEBUG] updating mutable fields agent")
-
+	log.Print("[DEBUG] updating mutable fields agent11111111")
 	_ = d.Set(NameFieldName, secureCNCluster.Name)
 	_ = d.Set(CiImageValidationFieldName, secureCNCluster.CiImageValidation)
 	_ = d.Set(CdPodTemplateFieldName, secureCNCluster.ClusterPodDefinitionSource == "CD")
 	_ = d.Set(ConnectionsControlFieldName, secureCNCluster.EnableConnectionsControl)
-	_ = d.Set(IstioAlreadyInstalledFieldName, secureCNCluster.IstioInstallationParameters.IsIstioAlreadyInstalled)
-	_ = d.Set(IstioVersionFieldName, secureCNCluster.IstioInstallationParameters.IstioVersion)
+	if secureCNCluster.IstioInstallationParameters == nil {
+		_ = d.Set(IstioAlreadyInstalledFieldName,nil)
+		_ = d.Set(IstioVersionFieldName,nil)
+	} else {
+		_ = d.Set(IstioAlreadyInstalledFieldName, secureCNCluster.IstioInstallationParameters.IsIstioAlreadyInstalled)
+		_ = d.Set(IstioVersionFieldName, secureCNCluster.IstioInstallationParameters.IstioVersion)
+	}
 	_ = d.Set(MultiClusterCommunicationSupportFieldName, secureCNCluster.IsMultiCluster)
 	_ = d.Set(InspectIncomingClusterConnectionsFieldName, secureCNCluster.PreserveOriginalSourceIP)
 	_ = d.Set(FailCloseFieldName, secureCNCluster.AgentFailClose)
 	_ = d.Set(CiImageSignatureValidationFieldName, secureCNCluster.CiImageSignatureValidation)
 	_ = d.Set(SupportExternalTraceSourceFieldName, secureCNCluster.SupportExternalTraceSource)
 	_ = d.Set(PersistentStorageFieldName, secureCNCluster.IsPersistent)
-	_ = d.Set(ExternalHttpsProxyFieldName, secureCNCluster.ProxyConfiguration.HTTPSProxy)
+	if secureCNCluster.ProxyConfiguration == nil {
+		_ = d.Set(ExternalHttpsProxyFieldName, nil)
+	} else {
+		_ = d.Set(ExternalHttpsProxyFieldName, secureCNCluster.ProxyConfiguration.HTTPSProxy)
+	}
 	_ = d.Set(OrchestrationTypeFieldName, secureCNCluster.OrchestrationType)
 	_ = d.Set(TLSInspectionFieldName, secureCNCluster.TLSInspectionEnabled)
 	_ = d.Set(TokenInjectionFieldName, secureCNCluster.TokenInjectionEnabled)
 	_ = d.Set(ServiceDiscoveryIsolationFieldName, secureCNCluster.ServiceDiscoveryIsolationEnabled)
+	log.Print("[DEBUG] 11111111")
 	_ = d.Set(RestrictRegistriesFieldName, secureCNCluster.RestrictRegistires)
 	_ = d.Set(IstioIngressEnabledFieldName, secureCNCluster.IsIstioIngressEnabled)
 	_ = d.Set(IstioIngressAnnotationsFieldName, getIstioAnnotationsMap(secureCNCluster))
@@ -693,20 +702,33 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(HoldApplicationUntilProxyStartsFieldName, secureCNCluster.IsHoldApplicationUntilProxyStarts)
 	_ = d.Set(InstallTracingSupportFieldName, secureCNCluster.InstallTracingSupport)
 	_ = d.Set(MinimumReplicasFieldName, secureCNCluster.MinimalNumberOfControllerReplicas)
-	_ = d.Set(InternalRegistryFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{{
-		InternalRegistryFieldNameUrl, secureCNCluster.InternalRegistryParameters.InternalRegistry}}))
+	if secureCNCluster.InternalRegistryParameters == nil {
+		_ = d.Set(InternalRegistryFieldName, nil)
+	} else {
+		_ = d.Set(InternalRegistryFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{{
+			InternalRegistryFieldNameUrl, secureCNCluster.InternalRegistryParameters.InternalRegistry}}))
+	}
+	if secureCNCluster.ExternalCa == nil {
+		_ = d.Set(ExternalCAFieldName, nil)
+	} else {
 	_ = d.Set(ExternalCAFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{
 		{ExternalCAFieldNameId, secureCNCluster.ExternalCa.ID},
 		{ExternalCAFieldNameName, secureCNCluster.ExternalCa.Name}}))
-	_ = d.Set(SidecarResourcesFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{
-		{SidecarResourcesFieldNameProxyInitLimitsCpu, secureCNCluster.SidecarsResources.ProxyInitLimitsCPU},
-		{SidecarResourcesFieldNameProxyInitLimitsMemory, secureCNCluster.SidecarsResources.ProxyInitLimitsMemory},
-		{SidecarResourcesFieldNameProxyInitRequestsCpu, secureCNCluster.SidecarsResources.ProxyInitRequestsCPU},
-		{SidecarResourcesFieldNameProxyInitRequestsMemory, secureCNCluster.SidecarsResources.ProxyInitRequestsMemory},
-		{SidecarResourcesFieldNameProxyLimitsCpu, secureCNCluster.SidecarsResources.ProxyLimitsCPU},
-		{SidecarResourcesFieldNameProxyLimitsMemory, secureCNCluster.SidecarsResources.ProxyLimitsMemory},
-		{SidecarResourcesFieldNameProxyRequestsCpu, secureCNCluster.SidecarsResources.ProxyRequestCPU},
-		{SidecarResourcesFieldNameProxyRequestsMemory, secureCNCluster.SidecarsResources.ProxyRequestMemory}}))
+	}
+
+	if secureCNCluster.SidecarsResources == nil {
+		_ = d.Set(SidecarResourcesFieldName, nil)
+	} else {
+		_ = d.Set(SidecarResourcesFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{
+			{SidecarResourcesFieldNameProxyInitLimitsCpu, secureCNCluster.SidecarsResources.ProxyInitLimitsCPU},
+			{SidecarResourcesFieldNameProxyInitLimitsMemory, secureCNCluster.SidecarsResources.ProxyInitLimitsMemory},
+			{SidecarResourcesFieldNameProxyInitRequestsCpu, secureCNCluster.SidecarsResources.ProxyInitRequestsCPU},
+			{SidecarResourcesFieldNameProxyInitRequestsMemory, secureCNCluster.SidecarsResources.ProxyInitRequestsMemory},
+			{SidecarResourcesFieldNameProxyLimitsCpu, secureCNCluster.SidecarsResources.ProxyLimitsCPU},
+			{SidecarResourcesFieldNameProxyLimitsMemory, secureCNCluster.SidecarsResources.ProxyLimitsMemory},
+			{SidecarResourcesFieldNameProxyRequestsCpu, secureCNCluster.SidecarsResources.ProxyRequestCPU},
+			{SidecarResourcesFieldNameProxyRequestsMemory, secureCNCluster.SidecarsResources.ProxyRequestMemory}}))
+	}
 }
 
 func getIstioAnnotationsMap(secureCNCluster *model.KubernetesCluster) map[string]string {
