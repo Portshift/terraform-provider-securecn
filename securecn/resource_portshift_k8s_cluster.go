@@ -666,14 +666,15 @@ func downloadInstallBundle(ctx context.Context, serviceApi *escherClient.MgmtSer
 }
 
 func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.KubernetesCluster) {
-	log.Print("[DEBUG] updating mutable fields agent11111111")
+	log.Print("[DEBUG] updating mutable fields agent")
+
 	_ = d.Set(NameFieldName, secureCNCluster.Name)
 	_ = d.Set(CiImageValidationFieldName, secureCNCluster.CiImageValidation)
 	_ = d.Set(CdPodTemplateFieldName, secureCNCluster.ClusterPodDefinitionSource == "CD")
 	_ = d.Set(ConnectionsControlFieldName, secureCNCluster.EnableConnectionsControl)
 	if secureCNCluster.IstioInstallationParameters == nil {
-		_ = d.Set(IstioAlreadyInstalledFieldName,nil)
-		_ = d.Set(IstioVersionFieldName,nil)
+		_ = d.Set(IstioAlreadyInstalledFieldName, nil)
+		_ = d.Set(IstioVersionFieldName, nil)
 	} else {
 		_ = d.Set(IstioAlreadyInstalledFieldName, secureCNCluster.IstioInstallationParameters.IsIstioAlreadyInstalled)
 		_ = d.Set(IstioVersionFieldName, secureCNCluster.IstioInstallationParameters.IstioVersion)
@@ -693,7 +694,6 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(TLSInspectionFieldName, secureCNCluster.TLSInspectionEnabled)
 	_ = d.Set(TokenInjectionFieldName, secureCNCluster.TokenInjectionEnabled)
 	_ = d.Set(ServiceDiscoveryIsolationFieldName, secureCNCluster.ServiceDiscoveryIsolationEnabled)
-	log.Print("[DEBUG] 11111111")
 	_ = d.Set(RestrictRegistriesFieldName, secureCNCluster.RestrictRegistires)
 	_ = d.Set(IstioIngressEnabledFieldName, secureCNCluster.IsIstioIngressEnabled)
 	_ = d.Set(IstioIngressAnnotationsFieldName, getIstioAnnotationsMap(secureCNCluster))
@@ -711,9 +711,9 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	if secureCNCluster.ExternalCa == nil {
 		_ = d.Set(ExternalCAFieldName, nil)
 	} else {
-	_ = d.Set(ExternalCAFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{
-		{ExternalCAFieldNameId, secureCNCluster.ExternalCa.ID},
-		{ExternalCAFieldNameName, secureCNCluster.ExternalCa.Name}}))
+		_ = d.Set(ExternalCAFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{
+			{ExternalCAFieldNameId, secureCNCluster.ExternalCa.ID},
+			{ExternalCAFieldNameName, secureCNCluster.ExternalCa.Name}}))
 	}
 
 	if secureCNCluster.SidecarsResources == nil {
