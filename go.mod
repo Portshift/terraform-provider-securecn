@@ -11,6 +11,6 @@ require (
 	github.com/go-openapi/validate v0.21.0
 	github.com/google/uuid v1.1.2
 	github.com/hashicorp/terraform-plugin-docs v0.5.1
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.25.0
 	github.com/spf13/cast v1.4.1
 )
