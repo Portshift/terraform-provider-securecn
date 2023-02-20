@@ -60,6 +60,7 @@ const TokenInjectionFieldName = "token_injection"
 const SkipReadyCheckFieldName = "skip_ready_check"
 const RollbackOnControllerFailureFieldName = "rollback_on_controller_failure"
 const InstallTracingSupportFieldName = "install_tracing_support"
+const InstallEnvoyTracingSupportFieldName = "install_envoy_tracing_support"
 const SidecarResourcesFieldName = "sidecar_resources"
 const SidecarResourcesFieldNameProxyInitLimitsCpu = "proxy_init_limits_cpu"
 const SidecarResourcesFieldNameProxyInitLimitsMemory = "proxy_init_limits_memory"
@@ -128,7 +129,8 @@ func ResourceCluster() *schema.Resource {
 			TokenInjectionFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the token injection is enabled"},
 			SkipReadyCheckFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the cluster installation should be async"},
 			RollbackOnControllerFailureFieldName:     {Type: schema.TypeBool, Optional: true, Default: true, Description: "delete cluster on controller installation failure. default = true"},
-			InstallTracingSupportFieldName:           {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install tracing support, enable for apiSecurity accounts."},
+			InstallTracingSupportFieldName:           {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install tracing support, enable for apiSecurity accounts"},
+			InstallEnvoyTracingSupportFieldName:      {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install Envoy tracing support, available when install tracing support is true"},
 			ExternalCAFieldName: {
 				Description: "Use an external CA for this cluster",
 				Optional:    true,
@@ -217,7 +219,7 @@ func ResourceCluster() *schema.Resource {
 				},
 			},
 			CiImageSignatureValidationFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "indicates whether ci image signer validation is Enabled"},
-			SupportExternalTraceSourceFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "indicates whether external trace sources are supported"},
+			SupportExternalTraceSourceFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "indicates whether external trace sources are supported, available when install tracing support is true"},
 		},
 	}
 }
@@ -575,6 +577,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	enableTLSInspection := d.Get(TLSInspectionFieldName).(bool)
 	enableTokenInjection := d.Get(TokenInjectionFieldName).(bool)
 	installTracingSupport := d.Get(InstallTracingSupportFieldName).(bool)
+	installEnvoyTracingSupport := d.Get(InstallEnvoyTracingSupportFieldName).(bool)
 
 	cluster := &model.KubernetesCluster{
 		AgentFailClose:                    &failClose,
@@ -601,6 +604,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		MinimalNumberOfControllerReplicas: minimumReplicas,
 		CiImageSignatureValidation:        &ciImageSignatureValidation,
 		InstallTracingSupport:             &installTracingSupport,
+		InstallEnvoyTracingSupport:        &installEnvoyTracingSupport,
 		SupportExternalTraceSource:        &supportExternalTraceSource,
 	}
 
@@ -701,6 +705,7 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(EnableAutoLabelFieldName, secureCNCluster.AutoLabelEnabled)
 	_ = d.Set(HoldApplicationUntilProxyStartsFieldName, secureCNCluster.IsHoldApplicationUntilProxyStarts)
 	_ = d.Set(InstallTracingSupportFieldName, secureCNCluster.InstallTracingSupport)
+	_ = d.Set(InstallEnvoyTracingSupportFieldName, secureCNCluster.InstallEnvoyTracingSupport)
 	_ = d.Set(MinimumReplicasFieldName, secureCNCluster.MinimalNumberOfControllerReplicas)
 	if secureCNCluster.InternalRegistryParameters == nil {
 		_ = d.Set(InternalRegistryFieldName, nil)
@@ -751,6 +756,7 @@ func validateConfig(d *schema.ResourceData) error {
 	connectionsControl := d.Get(ConnectionsControlFieldName).(bool)
 	inspectIncomingClusterConnections := d.Get(InspectIncomingClusterConnectionsFieldName).(bool)
 	installTraceSupport := d.Get(InstallTracingSupportFieldName).(bool)
+	installEnvoyTraceSupport := d.Get(InstallEnvoyTracingSupportFieldName).(bool)
 	supportExternalTraceSource := d.Get(SupportExternalTraceSourceFieldName).(bool)
 	if isMultiCluster && multiClusterFolder == "" {
 		return errors.New(fmt.Sprintf("invalid configuration. %s can't be empty when %s is true", MultiClusterCommunicationSupportCertsPathFieldName, MultiClusterCommunicationSupportFieldName))
@@ -766,6 +772,10 @@ func validateConfig(d *schema.ResourceData) error {
 
 	if !installTraceSupport && supportExternalTraceSource {
 		return errors.New(fmt.Sprintf("invalid cluster api security config. %s can't be turned on when %s is off", SupportExternalTraceSourceFieldName, InstallTracingSupportFieldName))
+	}
+
+	if !installTraceSupport && installEnvoyTraceSupport {
+		return errors.New(fmt.Sprintf("invalid cluster api security config. %s can't be turned on when %s is off", InstallEnvoyTracingSupportFieldName, InstallTracingSupportFieldName))
 	}
 
 	return nil

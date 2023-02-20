@@ -33,7 +33,8 @@ A SecureCN k8s cluster
 - `fail_close` (Boolean) When enabled, workloads and connections will be blocked in case SecureCN agent is not responding
 - `hold_application_until_proxy_starts` (Boolean) Indicates whether the controller should hold the application until the proxy starts
 - `inspect_incoming_cluster_connections` (Boolean) Enable enforcement and visibility of connections from external IP sources
-- `install_tracing_support` (Boolean) Indicates whether to install tracing support, enable for apiSecurity accounts.
+- `install_envoy_tracing_support` (Boolean) Indicates whether to install Envoy tracing support, available when install tracing support is true
+- `install_tracing_support` (Boolean) Indicates whether to install tracing support, enable for apiSecurity accounts
 - `internal_registry` (Block List, Max: 1) Use an internal container registry for this cluster (see [below for nested schema](#nestedblock--internal_registry))
 - `istio_already_installed` (Boolean) if false, istio will be installed, otherwise the controller will use the previously installed istio
 - `istio_ingress_annotations` (Map of String) when enabling Istio ingress, use these Istio ingress annotations
@@ -49,7 +50,7 @@ A SecureCN k8s cluster
 - `service_discovery_isolation` (Boolean) Indicates whether the service discovery isolation is enabled
 - `sidecar_resources` (Block List, Max: 1) Define resource limits for Istio sidecars (see [below for nested schema](#nestedblock--sidecar_resources))
 - `skip_ready_check` (Boolean) Indicates whether the cluster installation should be async
-- `support_external_trace_source` (Boolean) indicates whether external trace sources are supported
+- `support_external_trace_source` (Boolean) indicates whether external trace sources are supported, available when install tracing support is true
 - `tls_inspection` (Boolean) Indicates whether the TLS inspection is enabled
 - `token_injection` (Boolean) Indicates whether the token injection is enabled
 
