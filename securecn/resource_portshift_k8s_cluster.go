@@ -30,7 +30,9 @@ const scriptFilePath = "install_bundle.sh"
 
 const vaultCertsGenFilePath = "certs_gen_vault.sh"
 const tracingCertsFilePath = "certs_gen_tracing.sh"
-const uninstallAgentCommandFormat = "KUBECONFIG=%s kubectl get cm -n portshift portshift-uninstaller -o jsonpath='{.data.config}' | KUBECONFIG=%s bash"
+const uninstallAgentCommandFormat = "KUBECONFIG=%s kubectl get cm -n portshift portshift-uninstaller -o jsonpath='{.data.config}' | KUBECONFIG=%s"
+const forceRemoveVaultCmd = " FORCE_REMOVE_VAULT=\"TRUE\""
+const bash = " bash"
 const getPortshiftPodsFormat = "KUBECONFIG=%s kubectl get pods -n portshift"
 const describePortshiftPodsFormat = "KUBECONFIG=%s kubectl describe pods -n portshift"
 const useK8sContextCommandFormat = "kubectl config use-context"
@@ -59,6 +61,7 @@ const TLSInspectionFieldName = "tls_inspection"
 const TokenInjectionFieldName = "token_injection"
 const SkipReadyCheckFieldName = "skip_ready_check"
 const RollbackOnControllerFailureFieldName = "rollback_on_controller_failure"
+const ForceRemoveVaultOnDeleteFieldName = "force_remove_vault_on_delete"
 const InstallTracingSupportFieldName = "install_tracing_support"
 const InstallEnvoyTracingSupportFieldName = "install_envoy_tracing_support"
 const SidecarResourcesFieldName = "sidecar_resources"
@@ -129,6 +132,7 @@ func ResourceCluster() *schema.Resource {
 			TokenInjectionFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the token injection is enabled"},
 			SkipReadyCheckFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the cluster installation should be async"},
 			RollbackOnControllerFailureFieldName:     {Type: schema.TypeBool, Optional: true, Default: true, Description: "delete cluster on controller installation failure. default = true"},
+			ForceRemoveVaultOnDeleteFieldName:        {Type: schema.TypeBool, Optional: true, Default: false, Description: "delete the vault namespace (that was created for token injection) on delete. default = false"},
 			InstallTracingSupportFieldName:           {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install tracing support, enable for apiSecurity accounts"},
 			InstallEnvoyTracingSupportFieldName:      {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install Envoy tracing support, available when install tracing support is true"},
 			ExternalCAFieldName: {
@@ -253,12 +257,13 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	skipReadyCheck := d.Get(SkipReadyCheckFieldName).(bool)
 	rollbackOnFailure := d.Get(RollbackOnControllerFailureFieldName).(bool)
 	tracingEnabled := d.Get(InstallTracingSupportFieldName).(bool)
+	forceRemoveVault := d.Get(ForceRemoveVaultOnDeleteFieldName).(bool)
 
 	err = installAgentWithTimeout(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext, multiClusterFolder, tracingEnabled, tokenInjection, skipReadyCheck)
 	if err != nil {
 		log.Println("[ERROR] Panoptica controller installation has failed")
 		if rollbackOnFailure {
-			rollBackOnAgentInstallationFailure(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext)
+			rollBackOnAgentInstallationFailure(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext, forceRemoveVault)
 			return diag.FromErr(err)
 		} else {
 			log.Println("[ERROR] error while installing Panoptica controller. " +
@@ -270,7 +275,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	return resourceClusterRead(ctx, d, m)
 }
 
-func rollBackOnAgentInstallationFailure(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, k8sContext string) {
+func rollBackOnAgentInstallationFailure(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, k8sContext string, forceRemoveVault bool) {
 	deleteClusterError := serviceApi.DeleteKubernetesCluster(ctx, httpClientWrapper.HttpClient, clusterId)
 	if deleteClusterError != nil {
 		log.Println("[WARN] failed to remove cluster from Panoptica:")
@@ -278,7 +283,7 @@ func rollBackOnAgentInstallationFailure(ctx context.Context, serviceApi *escherC
 	}
 
 	_ = printPortshiftNamespaceBeforeDeletingController(k8sContext)
-	deleteAgentError := deleteAgent(k8sContext)
+	deleteAgentError := deleteAgent(k8sContext, forceRemoveVault)
 	if deleteAgentError != nil {
 		log.Println("[WARN] failed to uninstall controller: ")
 		log.Println(deleteAgentError)
@@ -352,7 +357,8 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	serviceApi := utils2.GetServiceApi(&httpClientWrapper)
 	clusterId := strfmt.UUID(d.Id())
 	k8sContext := d.Get(KubernetesClusterContextFieldName).(string)
-	err := deleteAgent(k8sContext)
+	forceRemoveVault := d.Get(ForceRemoveVaultOnDeleteFieldName).(bool)
+	err := deleteAgent(k8sContext, forceRemoveVault)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -451,7 +457,7 @@ func printPortshiftNamespaceBeforeDeletingController(context string) error {
 	return nil
 }
 
-func deleteAgent(context string) error {
+func  deleteAgent(context string, removeVault bool) error {
 	log.Printf("[DEBUG] deleting agent from context: " + context)
 
 	kubeconfig, err := createTempKubeconfig(context)
@@ -459,9 +465,17 @@ func deleteAgent(context string) error {
 		return err
 	}
 
-	defer os.Remove(kubeconfig)
+	//defer os.Remove(kubeconfig)
 
-	_, err = utils2.ExecBashCommand(fmt.Sprintf(uninstallAgentCommandFormat, kubeconfig, kubeconfig))
+	deleteCmd := fmt.Sprintf(uninstallAgentCommandFormat, kubeconfig, kubeconfig)
+
+	if removeVault {
+		deleteCmd = deleteCmd + forceRemoveVaultCmd
+	}
+
+	deleteCmd = deleteCmd + bash
+
+	_, err = utils2.ExecBashCommand(deleteCmd)
 	if err != nil {
 		return err
 	}
@@ -785,7 +799,8 @@ func updateAgent(ctx context.Context, d *schema.ResourceData, updatedCluster *mo
 	if !*updatedCluster.AutoUpdateEnabled {
 		log.Print("[DEBUG] updating agent")
 		context := d.Get(KubernetesClusterContextFieldName).(string)
-		err := deleteAgent(context)
+		forceRemoveVault := d.Get(ForceRemoveVaultOnDeleteFieldName).(bool)
+		err := deleteAgent(context, forceRemoveVault)
 		if err != nil {
 			return err
 		}

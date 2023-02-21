@@ -31,6 +31,7 @@ A SecureCN k8s cluster
 - `external_ca` (Block List, Max: 1) Use an external CA for this cluster (see [below for nested schema](#nestedblock--external_ca))
 - `external_https_proxy` (String) Proxy definitions for outgoing HTTPS traffic from the cluster, if needed
 - `fail_close` (Boolean) When enabled, workloads and connections will be blocked in case SecureCN agent is not responding
+- `force_remove_vault_on_delete` (Boolean) delete the vault namespace (that was created for token injection) on delete. default = false
 - `hold_application_until_proxy_starts` (Boolean) Indicates whether the controller should hold the application until the proxy starts
 - `inspect_incoming_cluster_connections` (Boolean) Enable enforcement and visibility of connections from external IP sources
 - `install_envoy_tracing_support` (Boolean) Indicates whether to install Envoy tracing support, available when install tracing support is true
