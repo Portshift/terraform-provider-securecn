@@ -179,35 +179,35 @@ func ResourceCluster() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						SidecarResourcesFieldNameProxyInitLimitsCpu: {
-							Type:     schema.TypeInt,
+							Type:     schema.TypeString,
 							Optional: true,
 						},
 						SidecarResourcesFieldNameProxyInitLimitsMemory: {
-							Type:     schema.TypeInt,
+							Type:     schema.TypeString,
 							Optional: true,
 						},
 						SidecarResourcesFieldNameProxyInitRequestsCpu: {
-							Type:     schema.TypeInt,
+							Type:     schema.TypeString,
 							Optional: true,
 						},
 						SidecarResourcesFieldNameProxyInitRequestsMemory: {
-							Type:     schema.TypeInt,
+							Type:     schema.TypeString,
 							Optional: true,
 						},
 						SidecarResourcesFieldNameProxyLimitsCpu: {
-							Type:     schema.TypeInt,
+							Type:     schema.TypeString,
 							Optional: true,
 						},
 						SidecarResourcesFieldNameProxyLimitsMemory: {
-							Type:     schema.TypeInt,
+							Type:     schema.TypeString,
 							Optional: true,
 						},
 						SidecarResourcesFieldNameProxyRequestsCpu: {
-							Type:     schema.TypeInt,
+							Type:     schema.TypeString,
 							Optional: true,
 						},
 						SidecarResourcesFieldNameProxyRequestsMemory: {
-							Type:     schema.TypeInt,
+							Type:     schema.TypeString,
 							Optional: true,
 						},
 					},
@@ -457,7 +457,7 @@ func printPortshiftNamespaceBeforeDeletingController(context string) error {
 	return nil
 }
 
-func  deleteAgent(context string, removeVault bool) error {
+func deleteAgent(context string, removeVault bool) error {
 	log.Printf("[DEBUG] deleting agent from context: " + context)
 
 	kubeconfig, err := createTempKubeconfig(context)
@@ -640,23 +640,23 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		}
 	}
 
-	proxyInitLimitsCpu := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_init_limits_cpu", 0)
-	proxyInitLimitsMemory := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_init_limits_memory", 0)
-	proxyInitRequestsCpu := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_init_requests_cpu", 0)
-	proxyInitRequestsMemory := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_init_requests_memory", 0)
-	proxyLimitsCpu := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_limits_cpu", 0)
-	proxyLimitsMemory := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_limits_memory", 0)
-	proxyRequestsCpu := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_requests_cpu", 0)
-	proxyRequestsMemory := utils2.ReadNestedIntFromTF(d, SidecarResourcesFieldName, "proxy_requests_memory", 0)
+	proxyInitLimitsCpu := utils2.ReadNestedStringFromTF(d, SidecarResourcesFieldName, "proxy_init_limits_cpu", 0)
+	proxyInitLimitsMemory := utils2.ReadNestedStringFromTF(d, SidecarResourcesFieldName, "proxy_init_limits_memory", 0)
+	proxyInitRequestsCpu := utils2.ReadNestedStringFromTF(d, SidecarResourcesFieldName, "proxy_init_requests_cpu", 0)
+	proxyInitRequestsMemory := utils2.ReadNestedStringFromTF(d, SidecarResourcesFieldName, "proxy_init_requests_memory", 0)
+	proxyLimitsCpu := utils2.ReadNestedStringFromTF(d, SidecarResourcesFieldName, "proxy_limits_cpu", 0)
+	proxyLimitsMemory := utils2.ReadNestedStringFromTF(d, SidecarResourcesFieldName, "proxy_limits_memory", 0)
+	proxyRequestsCpu := utils2.ReadNestedStringFromTF(d, SidecarResourcesFieldName, "proxy_requests_cpu", 0)
+	proxyRequestsMemory := utils2.ReadNestedStringFromTF(d, SidecarResourcesFieldName, "proxy_requests_memory", 0)
 	cluster.SidecarsResources = &model.SidecarsResource{
-		ProxyInitLimitsCPU:      int64(proxyInitLimitsCpu),
-		ProxyInitLimitsMemory:   int64(proxyInitLimitsMemory),
-		ProxyInitRequestsCPU:    int64(proxyInitRequestsCpu),
-		ProxyInitRequestsMemory: int64(proxyInitRequestsMemory),
-		ProxyLimitsCPU:          int64(proxyLimitsCpu),
-		ProxyLimitsMemory:       int64(proxyLimitsMemory),
-		ProxyRequestCPU:         int64(proxyRequestsCpu),
-		ProxyRequestMemory:      int64(proxyRequestsMemory),
+		ProxyInitLimitsCPU:      proxyInitLimitsCpu,
+		ProxyInitLimitsMemory:   proxyInitLimitsMemory,
+		ProxyInitRequestsCPU:    proxyInitRequestsCpu,
+		ProxyInitRequestsMemory: proxyInitRequestsMemory,
+		ProxyLimitsCPU:          proxyLimitsCpu,
+		ProxyLimitsMemory:       proxyLimitsMemory,
+		ProxyRequestCPU:         proxyRequestsCpu,
+		ProxyRequestMemory:      proxyRequestsMemory,
 	}
 
 	return cluster, nil
