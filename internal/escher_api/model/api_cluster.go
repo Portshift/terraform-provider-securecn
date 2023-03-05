@@ -161,10 +161,6 @@ func (m *KubernetesCluster) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateSidecarsResources(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
@@ -365,24 +361,6 @@ func (m *KubernetesCluster) validateProxyConfiguration(formats strfmt.Registry) 
 		if err := m.ProxyConfiguration.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("proxyConfiguration")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (m *KubernetesCluster) validateSidecarsResources(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.SidecarsResources) { // not required
-		return nil
-	}
-
-	if m.SidecarsResources != nil {
-		if err := m.SidecarsResources.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("sidecarsResources")
 			}
 			return err
 		}
