@@ -51,9 +51,7 @@ const IstioIngressAnnotationsFieldName = "istio_ingress_annotations"
 const EnableApiIntelligenceDASTFieldName = "api_intelligence_dast"
 const EnableAutoLabelFieldName = "auto_labeling"
 const HoldApplicationUntilProxyStartsFieldName = "hold_application_until_proxy_starts"
-const ExternalCAFieldName = "external_ca"
-const ExternalCAFieldNameId = "id"
-const ExternalCAFieldNameName = "name"
+const ExternalCAFieldName = "enable_external_ca"
 const InternalRegistryFieldName = "internal_registry"
 const InternalRegistryFieldNameUrl = "url"
 const ServiceDiscoveryIsolationFieldName = "service_discovery_isolation"
@@ -132,30 +130,10 @@ func ResourceCluster() *schema.Resource {
 			TokenInjectionFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the token injection is enabled"},
 			SkipReadyCheckFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the cluster installation should be async"},
 			RollbackOnControllerFailureFieldName:     {Type: schema.TypeBool, Optional: true, Default: true, Description: "delete cluster on controller installation failure. default = true"},
+			ExternalCAFieldName:                      {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to use external CA for this cluster"},
 			ForceRemoveVaultOnDeleteFieldName:        {Type: schema.TypeBool, Optional: true, Default: false, Description: "delete the vault namespace (that was created for token injection) on delete. default = false"},
 			InstallTracingSupportFieldName:           {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install tracing support, enable for apiSecurity accounts"},
 			InstallEnvoyTracingSupportFieldName:      {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether to install Envoy tracing support, available when install tracing support is true"},
-			ExternalCAFieldName: {
-				Description: "Use an external CA for this cluster",
-				Optional:    true,
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						ExternalCAFieldNameId: {
-							Description:  "The id of the external CA",
-							Optional:     true,
-							Type:         schema.TypeString,
-							ValidateFunc: validation.IsUUID,
-						},
-						ExternalCAFieldNameName: {
-							Description: "The name of the external CA",
-							Optional:    true,
-							Type:        schema.TypeString,
-						},
-					},
-				},
-			},
 			InternalRegistryFieldName: {
 				Description: "Use an internal container registry for this cluster",
 				Optional:    true,
@@ -592,6 +570,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	enableTokenInjection := d.Get(TokenInjectionFieldName).(bool)
 	installTracingSupport := d.Get(InstallTracingSupportFieldName).(bool)
 	installEnvoyTracingSupport := d.Get(InstallEnvoyTracingSupportFieldName).(bool)
+	externalCA := d.Get(ExternalCAFieldName).(bool)
 
 	cluster := &model.KubernetesCluster{
 		AgentFailClose:                    &failClose,
@@ -620,15 +599,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		InstallTracingSupport:             &installTracingSupport,
 		InstallEnvoyTracingSupport:        &installEnvoyTracingSupport,
 		SupportExternalTraceSource:        &supportExternalTraceSource,
-	}
-
-	externalCaId := utils2.ReadNestedStringFromTF(d, ExternalCAFieldName, "id", 0)
-	externalCaName := utils2.ReadNestedStringFromTF(d, ExternalCAFieldName, "name", 0)
-	if externalCaId != "" {
-		cluster.ExternalCa = &model.ExternalCaDetails{
-			ID:   strfmt.UUID(externalCaId),
-			Name: externalCaName,
-		}
+		ExternalCa:                        &externalCA,
 	}
 
 	internalRegistryUrl := utils2.ReadNestedStringFromTF(d, InternalRegistryFieldName, InternalRegistryFieldNameUrl, 0)
@@ -721,18 +692,13 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(InstallTracingSupportFieldName, secureCNCluster.InstallTracingSupport)
 	_ = d.Set(InstallEnvoyTracingSupportFieldName, secureCNCluster.InstallEnvoyTracingSupport)
 	_ = d.Set(MinimumReplicasFieldName, secureCNCluster.MinimalNumberOfControllerReplicas)
+	_ = d.Set(ExternalCAFieldName, secureCNCluster.ExternalCa)
+
 	if secureCNCluster.InternalRegistryParameters == nil {
 		_ = d.Set(InternalRegistryFieldName, nil)
 	} else {
 		_ = d.Set(InternalRegistryFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{{
 			InternalRegistryFieldNameUrl, secureCNCluster.InternalRegistryParameters.InternalRegistry}}))
-	}
-	if secureCNCluster.ExternalCa == nil {
-		_ = d.Set(ExternalCAFieldName, nil)
-	} else {
-		_ = d.Set(ExternalCAFieldName, utils2.GetTfMapFromKeyValuePairs([]utils2.KeyValue{
-			{ExternalCAFieldNameId, secureCNCluster.ExternalCa.ID},
-			{ExternalCAFieldNameName, secureCNCluster.ExternalCa.Name}}))
 	}
 
 	if secureCNCluster.SidecarsResources == nil {
