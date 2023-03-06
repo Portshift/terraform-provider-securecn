@@ -44,7 +44,7 @@ type KubernetesCluster struct {
 	EnableConnectionsControl *bool `json:"enableConnectionsControl"`
 
 	// external ca
-	ExternalCa *ExternalCaDetails `json:"externalCa,omitempty"`
+	ExternalCa *bool `json:"useExternalCA,omitempty"`
 
 	// Id of the cluster.
 	// Read Only: true
@@ -129,10 +129,6 @@ func (m *KubernetesCluster) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateExternalCa(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.validateID(formats); err != nil {
 		res = append(res, err)
 	}
@@ -183,24 +179,6 @@ func (m *KubernetesCluster) validateEnableConnectionsControl(formats strfmt.Regi
 
 	if err := validate.Required("enableConnectionsControl", "body", m.EnableConnectionsControl); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (m *KubernetesCluster) validateExternalCa(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.ExternalCa) { // not required
-		return nil
-	}
-
-	if m.ExternalCa != nil {
-		if err := m.ExternalCa.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("externalCa")
-			}
-			return err
-		}
 	}
 
 	return nil
