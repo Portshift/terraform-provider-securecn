@@ -118,6 +118,8 @@ type KubernetesCluster struct {
 	CiImageSignatureValidation *bool `json:"ciImageSignatureValidation,omitempty"`
 
 	SupportExternalTraceSource *bool `json:"supportExternalTraceSource,omitempty"`
+
+	AutoUpgradeControllerVersion *bool `json:"autoUpgradeControllerVersion,omitempty"`
 }
 
 // Validate validates this kubernetes cluster
