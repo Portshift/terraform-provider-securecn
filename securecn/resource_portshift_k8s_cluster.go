@@ -82,6 +82,7 @@ const OrchestrationTypeFieldName = "orchestration_type"
 const MinimumReplicasFieldName = "minimum_replicas"
 const CiImageSignatureValidationFieldName = "ci_image_signer_validation_enabled"
 const SupportExternalTraceSourceFieldName = "support_external_trace_source"
+const AutoUpgradeControllerVersionFieldName = "auto_upgrade_controller_version"
 
 func ResourceCluster() *schema.Resource {
 	return &schema.Resource{
@@ -202,8 +203,9 @@ func ResourceCluster() *schema.Resource {
 					return
 				},
 			},
-			CiImageSignatureValidationFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "indicates whether ci image signer validation is Enabled"},
-			SupportExternalTraceSourceFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "indicates whether external trace sources are supported, available when install tracing support is true"},
+			CiImageSignatureValidationFieldName:   {Type: schema.TypeBool, Optional: true, Default: false, Description: "indicates whether ci image signer validation is Enabled"},
+			SupportExternalTraceSourceFieldName:   {Type: schema.TypeBool, Optional: true, Default: false, Description: "indicates whether external trace sources are supported, available when install tracing support is true"},
+			AutoUpgradeControllerVersionFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "indicates whether upgrade the controller automatically"},
 		},
 	}
 }
@@ -546,6 +548,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	ciImageSignatureValidation := d.Get(CiImageSignatureValidationFieldName).(bool)
 	supportExternalTraceSource := d.Get(SupportExternalTraceSourceFieldName).(bool)
 	persistentStorage := d.Get(PersistentStorageFieldName).(bool)
+	autoUpgradeControllerVersion := d.Get(AutoUpgradeControllerVersionFieldName).(bool)
 	externalHttpsProxy := d.Get(ExternalHttpsProxyFieldName).(string)
 	orchestrationType := d.Get(OrchestrationTypeFieldName).(string)
 	minimumReplicas := d.Get(MinimumReplicasFieldName).(int)
@@ -604,6 +607,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		InstallEnvoyTracingSupport:        &installEnvoyTracingSupport,
 		SupportExternalTraceSource:        &supportExternalTraceSource,
 		ExternalCa:                        &externalCA,
+		AutoUpgradeControllerVersion:      &autoUpgradeControllerVersion,
 	}
 
 	internalRegistryUrl := utils2.ReadNestedStringFromTF(d, InternalRegistryFieldName, InternalRegistryFieldNameUrl, 0)
@@ -698,6 +702,7 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(InstallEnvoyTracingSupportFieldName, secureCNCluster.InstallEnvoyTracingSupport)
 	_ = d.Set(MinimumReplicasFieldName, secureCNCluster.MinimalNumberOfControllerReplicas)
 	_ = d.Set(ExternalCAFieldName, secureCNCluster.ExternalCa)
+	_ = d.Set(AutoUpgradeControllerVersionFieldName, secureCNCluster.AutoUpgradeControllerVersion)
 
 	if secureCNCluster.InternalRegistryParameters == nil {
 		_ = d.Set(InternalRegistryFieldName, nil)
