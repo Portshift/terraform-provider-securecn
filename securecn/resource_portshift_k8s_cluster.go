@@ -772,7 +772,7 @@ func validateConfig(d *schema.ResourceData) error {
 }
 
 func updateAgent(ctx context.Context, d *schema.ResourceData, updatedCluster *model.KubernetesCluster, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper) error {
-	if !*updatedCluster.AutoUpdateEnabled {
+	if updatedCluster.ControllerStatus == model.ControllerStatusWAITINGFORUSERUPDATE {
 		log.Print("[DEBUG] updating agent")
 		context := d.Get(KubernetesClusterContextFieldName).(string)
 		forceRemoveVault := d.Get(ForceRemoveVaultOnDeleteFieldName).(bool)
