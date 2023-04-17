@@ -41,6 +41,7 @@ A SecureCN k8s cluster
 - `istio_ingress_annotations` (Map of String) when enabling Istio ingress, use these Istio ingress annotations
 - `istio_ingress_enabled` (Boolean) If installing Istio, use Istio ingress
 - `istio_version` (String) if istio already installed, this specifies its version
+- `k8s_events` (Boolean) indicates whether kubernetes events sending is enabled
 - `minimum_replicas` (Number) minimum number of controller replicas
 - `multi_cluster_communication_support` (Boolean) Enable multi cluster communication
 - `multi_cluster_communication_support_certs_path` (String) Multi cluster certs path. Only valid if multi_cluster_communication_support is true
