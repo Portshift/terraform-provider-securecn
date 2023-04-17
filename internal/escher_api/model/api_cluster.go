@@ -100,6 +100,9 @@ type KubernetesCluster struct {
 	// indicates whether TLS inspection is enabled
 	TLSInspectionEnabled *bool `json:"tlsInspectionEnabled,omitempty"`
 
+	// indicates whether kubernetes events sending is enabled
+	K8sEventsEnabled *bool `json:"k8sEventsEnabled,omitempty"`
+
 	// indicates whether token injection is enabled
 	TokenInjectionEnabled *bool `json:"tokenInjectionEnabled,omitempty"`
 
