@@ -23,9 +23,6 @@ type KubernetesCluster struct {
 	// indicates fail close behavior on SecureCn agent failure
 	AgentFailClose *bool `json:"agentFailClose,omitempty"`
 
-	// indicates if the controller is updated. when false, reinstall is needed
-	AutoUpdateEnabled *bool `json:"autoUpdateEnabled,omitempty"`
-
 	// indicates whether apiIntelligenceDAST is enabled
 	APIIntelligenceDAST *bool `json:"apiIntelligenceDAST,omitempty"`
 
@@ -119,12 +116,19 @@ type KubernetesCluster struct {
 
 	SupportExternalTraceSource *bool `json:"supportExternalTraceSource,omitempty"`
 
+	// controller status
+	ControllerStatus ControllerStatus `json:"controllerStatus,omitempty"`
+
 	AutoUpgradeControllerVersion *bool `json:"autoUpgradeControllerVersion,omitempty"`
 }
 
 // Validate validates this kubernetes cluster
 func (m *KubernetesCluster) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.validateControllerStatus(formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.validateClusterPodDefinitionSource(formats); err != nil {
 		res = append(res, err)
@@ -167,6 +171,22 @@ func (m *KubernetesCluster) Validate(formats strfmt.Registry) error {
 	}
 	return nil
 }
+
+func (m *KubernetesCluster) validateControllerStatus(formats strfmt.Registry) error {
+	if swag.IsZero(m.ControllerStatus) { // not required
+		return nil
+	}
+
+	if err := m.ControllerStatus.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("controllerStatus")
+		}
+		return err
+	}
+
+	return nil
+}
+
 
 func (m *KubernetesCluster) validateClusterPodDefinitionSource(formats strfmt.Registry) error {
 
