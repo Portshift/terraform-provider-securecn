@@ -56,7 +56,7 @@ const InternalRegistryFieldName = "internal_registry"
 const InternalRegistryFieldNameUrl = "url"
 const ServiceDiscoveryIsolationFieldName = "service_discovery_isolation"
 const TLSInspectionFieldName = "tls_inspection"
-const K8sEventsFieldName = "k8s_events"
+const EnableK8sEventsFieldName = "enable_k8s_events"
 const TokenInjectionFieldName = "token_injection"
 const SkipReadyCheckFieldName = "skip_ready_check"
 const RollbackOnControllerFailureFieldName = "rollback_on_controller_failure"
@@ -128,7 +128,7 @@ func ResourceCluster() *schema.Resource {
 			HoldApplicationUntilProxyStartsFieldName: {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the controller should hold the application until the proxy starts"},
 			ServiceDiscoveryIsolationFieldName:       {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the service discovery isolation is enabled"},
 			TLSInspectionFieldName:                   {Type: schema.TypeBool, Optional: true, Computed: true, Description: "Indicates whether the TLS inspection is enabled"},
-			K8sEventsFieldName:                       {Type: schema.TypeBool, Optional: true, Computed: true, Description: "indicates whether kubernetes events sending is enabled"},
+			EnableK8sEventsFieldName:                 {Type: schema.TypeBool, Optional: true, Computed: true, Description: "indicates whether kubernetes events sending is enabled"},
 			TokenInjectionFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the token injection is enabled"},
 			SkipReadyCheckFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the cluster installation should be async"},
 			RollbackOnControllerFailureFieldName:     {Type: schema.TypeBool, Optional: true, Default: true, Description: "delete cluster on controller installation failure. default = true"},
@@ -569,7 +569,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	holdApplicationUntilProxyStarts := d.Get(HoldApplicationUntilProxyStartsFieldName).(bool)
 	enableServiceDiscoveryIsolation := d.Get(ServiceDiscoveryIsolationFieldName).(bool)
 	enableTLSInspection := d.Get(TLSInspectionFieldName).(bool)
-	K8sEvents := d.Get(K8sEventsFieldName).(bool)
+	enableK8sEvents := d.Get(EnableK8sEventsFieldName).(bool)
 	enableTokenInjection := d.Get(TokenInjectionFieldName).(bool)
 	installTracingSupport := d.Get(InstallTracingSupportFieldName).(bool)
 	installEnvoyTracingSupport := d.Get(InstallEnvoyTracingSupportFieldName).(bool)
@@ -596,7 +596,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		RestrictRegistires:                &restrictRegistries,
 		ServiceDiscoveryIsolationEnabled:  &enableServiceDiscoveryIsolation,
 		TLSInspectionEnabled:              &enableTLSInspection,
-		K8sEventsEnabled:                  &K8sEvents,
+		K8sEventsEnabled:                  &enableK8sEvents,
 		TokenInjectionEnabled:             &enableTokenInjection,
 		MinimalNumberOfControllerReplicas: minimumReplicas,
 		CiImageSignatureValidation:        &ciImageSignatureValidation,
@@ -685,7 +685,7 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	}
 	_ = d.Set(OrchestrationTypeFieldName, secureCNCluster.OrchestrationType)
 	_ = d.Set(TLSInspectionFieldName, secureCNCluster.TLSInspectionEnabled)
-	_ = d.Set(K8sEventsFieldName, secureCNCluster.K8sEventsEnabled)
+	_ = d.Set(EnableK8sEventsFieldName, secureCNCluster.K8sEventsEnabled)
 	_ = d.Set(TokenInjectionFieldName, secureCNCluster.TokenInjectionEnabled)
 	_ = d.Set(ServiceDiscoveryIsolationFieldName, secureCNCluster.ServiceDiscoveryIsolationEnabled)
 	_ = d.Set(RestrictRegistriesFieldName, secureCNCluster.RestrictRegistires)
