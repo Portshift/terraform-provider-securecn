@@ -119,7 +119,7 @@ func ResourceCluster() *schema.Resource {
 			FailCloseFieldName:                         {Type: schema.TypeBool, Optional: true, Default: false, Description: "When enabled, workloads and connections will be blocked in case SecureCN agent is not responding"},
 			PersistentStorageFieldName:                 {Type: schema.TypeBool, Optional: true, Default: false, Description: "Allow SecureCN agent to save the policy persistently, so it will be available after a restart of the pod. This will Require 128MB of storage for the agent pod."},
 			ExternalHttpsProxyFieldName:                {Type: schema.TypeString, Optional: true, Default: "", Description: "Proxy definitions for outgoing HTTPS traffic from the cluster, if needed"},
-			OrchestrationTypeFieldName: {Type: schema.TypeString, Optional: true, Default: "KUBERNETES", Description: "Orchestration type of the kubernetes cluster",
+			OrchestrationTypeFieldName: {Type: schema.TypeString, Optional: true, Default: "KUBERNETES", Description: "Orchestration type of the kubernetes cluster optional values: GKE, OPENSHIFT, RANCHER, AKS, EKS, KUBERNETES, IKS.",
 				ValidateFunc: validation.StringInSlice([]string{
 					"GKE", "OPENSHIFT", "RANCHER", "AKS", "EKS", "KUBERNETES", "IKS",
 				}, true),

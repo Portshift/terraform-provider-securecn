@@ -46,7 +46,7 @@ A SecureCN k8s cluster
 - `minimum_replicas` (Number) minimum number of controller replicas
 - `multi_cluster_communication_support` (Boolean) Enable multi cluster communication
 - `multi_cluster_communication_support_certs_path` (String) Multi cluster certs path. Only valid if multi_cluster_communication_support is true
-- `orchestration_type` (String) Orchestration type of the kubernetes cluster
+- `orchestration_type` (String) Orchestration type of the kubernetes cluster optional values: GKE, OPENSHIFT, RANCHER, AKS, EKS, KUBERNETES, IKS.
 - `persistent_storage` (Boolean) Allow SecureCN agent to save the policy persistently, so it will be available after a restart of the pod. This will Require 128MB of storage for the agent pod.
 - `restrict_registries` (Boolean) Workload from untrusted registries will be marked as 'unknown'
 - `rollback_on_controller_failure` (Boolean) delete cluster on controller installation failure. default = true
