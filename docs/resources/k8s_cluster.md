@@ -31,6 +31,7 @@ A SecureCN k8s cluster
 - `connections_control` (Boolean) Enable connections control
 - `enable_external_ca` (Boolean) Indicates whether to use external CA for this cluster
 - `enable_k8s_events` (Boolean) indicates whether kubernetes events sending is enabled
+- `disable_ssh_probing` (Boolean) indicates whether SSH monitoring is disabled
 - `external_https_proxy` (String) Proxy definitions for outgoing HTTPS traffic from the cluster, if needed
 - `fail_close` (Boolean) When enabled, workloads and connections will be blocked in case SecureCN agent is not responding
 - `force_remove_vault_on_delete` (Boolean) delete the vault namespace (that was created for token injection) on delete. default = false

@@ -100,6 +100,9 @@ type KubernetesCluster struct {
 	// indicates whether kubernetes events sending is enabled
 	K8sEventsEnabled *bool `json:"k8sEventsEnabled,omitempty"`
 
+	// indicates whether SSH monitoring is disabled
+	SshMonitorDisabled *bool `json:"sshMonitorDisabled,omitempty"`
+
 	// indicates whether token injection is enabled
 	TokenInjectionEnabled *bool `json:"tokenInjectionEnabled,omitempty"`
 
