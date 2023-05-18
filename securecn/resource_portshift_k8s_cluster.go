@@ -57,6 +57,7 @@ const InternalRegistryFieldNameUrl = "url"
 const ServiceDiscoveryIsolationFieldName = "service_discovery_isolation"
 const TLSInspectionFieldName = "tls_inspection"
 const EnableK8sEventsFieldName = "enable_k8s_events"
+const DisableSshMonitorFieldName = "disable_ssh_probing"
 const TokenInjectionFieldName = "token_injection"
 const SkipReadyCheckFieldName = "skip_ready_check"
 const RollbackOnControllerFailureFieldName = "rollback_on_controller_failure"
@@ -130,6 +131,7 @@ func ResourceCluster() *schema.Resource {
 			ServiceDiscoveryIsolationFieldName:       {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the service discovery isolation is enabled"},
 			TLSInspectionFieldName:                   {Type: schema.TypeBool, Optional: true, Computed: true, Description: "Indicates whether the TLS inspection is enabled"},
 			EnableK8sEventsFieldName:                 {Type: schema.TypeBool, Optional: true, Computed: true, Description: "indicates whether kubernetes events sending is enabled"},
+			DisableSshMonitorFieldName:               {Type: schema.TypeBool, Optional: true, Computed: false, Description:  "indicates whether SSH monitoring is disabled"},
 			TokenInjectionFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the token injection is enabled"},
 			SkipReadyCheckFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the cluster installation should be async"},
 			RollbackOnControllerFailureFieldName:     {Type: schema.TypeBool, Optional: true, Default: true, Description: "delete cluster on controller installation failure. default = true"},
@@ -573,6 +575,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	enableServiceDiscoveryIsolation := d.Get(ServiceDiscoveryIsolationFieldName).(bool)
 	enableTLSInspection := d.Get(TLSInspectionFieldName).(bool)
 	enableK8sEvents := d.Get(EnableK8sEventsFieldName).(bool)
+	disableSshMonitor := d.Get(DisableSshMonitorFieldName).(bool)
 	enableTokenInjection := d.Get(TokenInjectionFieldName).(bool)
 	installTracingSupport := d.Get(InstallTracingSupportFieldName).(bool)
 	installEnvoyTracingSupport := d.Get(InstallEnvoyTracingSupportFieldName).(bool)
@@ -600,6 +603,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		ServiceDiscoveryIsolationEnabled:  &enableServiceDiscoveryIsolation,
 		TLSInspectionEnabled:              &enableTLSInspection,
 		K8sEventsEnabled:                  &enableK8sEvents,
+		SshMonitorDisabled:                &disableSshMonitor,
 		TokenInjectionEnabled:             &enableTokenInjection,
 		MinimalNumberOfControllerReplicas: minimumReplicas,
 		CiImageSignatureValidation:        &ciImageSignatureValidation,
@@ -690,6 +694,7 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(OrchestrationTypeFieldName, secureCNCluster.OrchestrationType)
 	_ = d.Set(TLSInspectionFieldName, secureCNCluster.TLSInspectionEnabled)
 	_ = d.Set(EnableK8sEventsFieldName, secureCNCluster.K8sEventsEnabled)
+	_ = d.Set(DisableSshMonitorFieldName, secureCNCluster.SshMonitorDisabled)
 	_ = d.Set(TokenInjectionFieldName, secureCNCluster.TokenInjectionEnabled)
 	_ = d.Set(ServiceDiscoveryIsolationFieldName, secureCNCluster.ServiceDiscoveryIsolationEnabled)
 	_ = d.Set(RestrictRegistriesFieldName, secureCNCluster.RestrictRegistires)
