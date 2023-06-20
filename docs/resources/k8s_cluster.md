@@ -3,12 +3,12 @@
 page_title: "securecn_k8s_cluster Resource - terraform-provider-securecn"
 subcategory: ""
 description: |-
-  A SecureCN k8s cluster
+  A Panoptica k8s cluster, Helm v3.8.0 or higher required
 ---
 
 # securecn_k8s_cluster (Resource)
 
-A SecureCN k8s cluster
+A Panoptica k8s cluster, Helm v3.8.0 or higher required
 
 
 
@@ -83,5 +83,3 @@ Optional:
 - `proxy_limits_memory` (String)
 - `proxy_requests_cpu` (String)
 - `proxy_requests_memory` (String)
-
-

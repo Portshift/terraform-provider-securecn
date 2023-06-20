@@ -91,7 +91,7 @@ func ResourceCluster() *schema.Resource {
 		ReadContext:   resourceClusterRead,
 		UpdateContext: resourceClusterUpdate,
 		DeleteContext: resourceClusterDelete,
-		Description:   "A SecureCN k8s cluster",
+		Description:   "A Panoptica k8s cluster, Helm v3.8.0 or higher required",
 		Schema: map[string]*schema.Schema{
 			KubernetesClusterContextFieldName: {Type: schema.TypeString, Required: true, ForceNew: true, Description: "The k8s context name of the cluster", ValidateFunc: validation.StringIsNotEmpty},
 			NameFieldName:                     {Type: schema.TypeString, Required: true, Description: "The name of cluster in SecureCN"},
@@ -131,7 +131,7 @@ func ResourceCluster() *schema.Resource {
 			ServiceDiscoveryIsolationFieldName:       {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the service discovery isolation is enabled"},
 			TLSInspectionFieldName:                   {Type: schema.TypeBool, Optional: true, Computed: true, Description: "Indicates whether the TLS inspection is enabled"},
 			EnableK8sEventsFieldName:                 {Type: schema.TypeBool, Optional: true, Computed: true, Description: "indicates whether kubernetes events sending is enabled"},
-			DisableSshMonitorFieldName:               {Type: schema.TypeBool, Optional: true, Computed: false, Description:  "indicates whether SSH monitoring is disabled"},
+			DisableSshMonitorFieldName:               {Type: schema.TypeBool, Optional: true, Computed: false, Description: "indicates whether SSH monitoring is disabled"},
 			TokenInjectionFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the token injection is enabled"},
 			SkipReadyCheckFieldName:                  {Type: schema.TypeBool, Optional: true, Default: false, Description: "Indicates whether the cluster installation should be async"},
 			RollbackOnControllerFailureFieldName:     {Type: schema.TypeBool, Optional: true, Default: true, Description: "delete cluster on controller installation failure. default = true"},

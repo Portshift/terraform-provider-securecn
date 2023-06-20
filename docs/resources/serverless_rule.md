@@ -70,5 +70,3 @@ Optional:
 - `risk` (String)
 - `secrets_risk` (String)
 - `vulnerability` (String)
-
-

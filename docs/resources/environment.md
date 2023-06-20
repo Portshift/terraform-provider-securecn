@@ -39,5 +39,3 @@ Optional:
 
 - `namespaces_by_labels` (Map of String) The source will match using namespace labels
 - `namespaces_by_names` (List of String) The env will match using namespace name
-
-
