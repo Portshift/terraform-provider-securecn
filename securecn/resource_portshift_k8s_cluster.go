@@ -11,7 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
+	"syscall"
 	"terraform-provider-securecn/internal/client"
 	"terraform-provider-securecn/internal/escher_api/escherClient"
 	"terraform-provider-securecn/internal/escher_api/model"
@@ -25,12 +25,13 @@ import (
 	"github.com/spf13/cast"
 )
 
+const installationDirPrefix = ".kubernetes_controller_installation_path_"
 const secureCNBundleFilePath = "securecn_bundle.tar.gz"
 const scriptFilePath = "install_bundle.sh"
+const uninstallCmd = "./" + scriptFilePath + " --uninstall"
 
 const vaultCertsGenFilePath = "certs_gen_vault.sh"
 const tracingCertsFilePath = "certs_gen_tracing.sh"
-const uninstallAgentCommandFormat = "KUBECONFIG=%s kubectl get cm -n portshift portshift-uninstaller -o jsonpath='{.data.config}' | KUBECONFIG=%s"
 const forceRemoveVaultCmd = " FORCE_REMOVE_VAULT=\"TRUE\""
 const bash = " bash"
 const getPortshiftPodsFormat = "KUBECONFIG=%s kubectl get pods -n portshift"
@@ -267,7 +268,7 @@ func rollBackOnAgentInstallationFailure(ctx context.Context, serviceApi *escherC
 	}
 
 	_ = printPortshiftNamespaceBeforeDeletingController(k8sContext)
-	deleteAgentError := deleteAgent(k8sContext, forceRemoveVault)
+	deleteAgentError := deleteAgent(k8sContext, forceRemoveVault, ctx, serviceApi, httpClientWrapper, clusterId)
 	if deleteAgentError != nil {
 		log.Println("[WARN] failed to uninstall controller: ")
 		log.Println(deleteAgentError)
@@ -342,7 +343,7 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	clusterId := strfmt.UUID(d.Id())
 	k8sContext := d.Get(KubernetesClusterContextFieldName).(string)
 	forceRemoveVault := d.Get(ForceRemoveVaultOnDeleteFieldName).(bool)
-	err := deleteAgent(k8sContext, forceRemoveVault)
+	err := deleteAgent(k8sContext, forceRemoveVault, ctx, serviceApi, httpClientWrapper, clusterId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -361,46 +362,66 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 func installAgent(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, context string, multiClusterFolder string, tracingEnabled bool, tokenInjection bool, skipReadyCheck bool) error {
 	log.Print("[DEBUG] installing agent")
 
-	installationDir := ".kubernetes_controller_installation_path_" + uuid.New().String()
-	if err := os.Mkdir(installationDir, os.ModePerm); err != nil {
-		return err
-	}
-
-	defer removeDirectory(installationDir)
-
-	err := downloadAndExtractBundle(ctx, serviceApi, httpClientWrapper, clusterId, installationDir)
+	rootPath, _ := syscall.Getwd()
+	installationDir, kubeconfig, err := setUpInstallation(ctx, serviceApi, httpClientWrapper, clusterId, context)
 	if err != nil {
 		return err
 	}
 
+	defer clearInstallationDir(rootPath, installationDir)
+
 	if tokenInjection {
-		err = utils2.MakeExecutable(filepath.Join(installationDir, vaultCertsGenFilePath))
+		err = utils2.MakeExecutable(vaultCertsGenFilePath)
 		if err != nil {
 			return err
 		}
 	}
 
 	if tracingEnabled {
-		err = utils2.MakeExecutable(filepath.Join(installationDir, tracingCertsFilePath))
+		err = utils2.MakeExecutable(tracingCertsFilePath)
 		if err != nil {
 			return err
 		}
 	}
 
-	kubeconfig, err := createTempKubeconfig(context)
-	if err != nil {
-		return err
-	}
-
-	defer os.Remove(kubeconfig)
-
-	output, err := utils2.ExecuteScript(filepath.Join(installationDir, scriptFilePath), multiClusterFolder, skipReadyCheck, kubeconfig)
+	output, err := utils2.ExecuteScript(scriptFilePath, multiClusterFolder, skipReadyCheck, kubeconfig)
 	if err != nil {
 		log.Print("[DEBUG] controller installation failed")
 		return fmt.Errorf("%s:\n%s", err, output)
 	}
 
 	return nil
+}
+
+func clearInstallationDir(rootPath string, installationDir string) {
+	os.Chdir(rootPath)
+	removeDirectory(installationDir)
+}
+
+func setUpInstallation(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, k8sContext string) (string, string, error) {
+	installationDir := installationDirPrefix + uuid.New().String()
+	if err := os.Mkdir(installationDir, os.ModePerm); err != nil {
+		return "", "", err
+	}
+
+	os.Chdir(installationDir)
+
+	kubeconfig, err := createTempKubeconfig(k8sContext)
+	if err != nil {
+		return "", "", err
+	}
+
+	err = downloadAndExtractBundle(ctx, serviceApi, httpClientWrapper, clusterId)
+	if err != nil {
+		return "", "", err
+	}
+
+	err = utils2.MakeExecutable("./" + scriptFilePath)
+	if err != nil {
+		return "", "", err
+	}
+
+	return installationDir, kubeconfig, err
 }
 
 func installAgentWithTimeout(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, context string, multiClusterFolder string, tracingEnabled bool, tokenInjection bool, skipReadyCheck bool) error {
@@ -441,25 +462,18 @@ func printPortshiftNamespaceBeforeDeletingController(context string) error {
 	return nil
 }
 
-func deleteAgent(context string, removeVault bool) error {
-	log.Printf("[DEBUG] deleting agent from context: " + context)
+func deleteAgent(k8sContext string, removeVault bool, ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID) error {
+	log.Printf("[DEBUG] deleting agent from k8sContext: " + k8sContext)
 
-	kubeconfig, err := createTempKubeconfig(context)
+	rootPath, _ := syscall.Getwd()
+	installationDir, kubeconfig, err := setUpInstallation(ctx, serviceApi, httpClientWrapper, clusterId, k8sContext)
 	if err != nil {
 		return err
 	}
+	defer clearInstallationDir(rootPath, installationDir)
 
-	//defer os.Remove(kubeconfig)
-
-	deleteCmd := fmt.Sprintf(uninstallAgentCommandFormat, kubeconfig, kubeconfig)
-
-	if removeVault {
-		deleteCmd = deleteCmd + forceRemoveVaultCmd
-	}
-
-	deleteCmd = deleteCmd + bash
-
-	_, err = utils2.ExecBashCommand(deleteCmd)
+	output, err := utils2.ExecBashCommand(fmt.Sprintf("KUBECONFIG=%s %s", kubeconfig, uninstallCmd))
+	log.Printf("[INFO] " + output)
 	if err != nil {
 		return err
 	}
@@ -504,21 +518,19 @@ func createTempKubeconfig(context string) (string, error) {
 	return kubeconfigfile.Name(), nil
 }
 
-func downloadAndExtractBundle(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID, installationDir string) error {
+func downloadAndExtractBundle(ctx context.Context, serviceApi *escherClient.MgmtServiceApiCtx, httpClientWrapper client.HttpClientWrapper, clusterId strfmt.UUID) error {
 	log.Print("[DEBUG] downloading and extracting bundle")
 
-	bundlePath := filepath.Join(installationDir, secureCNBundleFilePath)
-
-	err := downloadInstallBundle(ctx, serviceApi, httpClientWrapper.HttpClient, clusterId, bundlePath)
+	err := downloadInstallBundle(ctx, serviceApi, httpClientWrapper.HttpClient, clusterId, secureCNBundleFilePath)
 	if err != nil {
 		return err
 	}
-	open, err := os.Open(bundlePath)
+	open, err := os.Open(secureCNBundleFilePath)
 	if err != nil {
 		return err
 	}
 
-	err = utils2.ExtractTarGz(open, installationDir)
+	err = utils2.ExtractTarGz(open)
 	if err != nil {
 		return err
 	}
@@ -781,7 +793,7 @@ func updateAgent(ctx context.Context, d *schema.ResourceData, updatedCluster *mo
 		log.Print("[DEBUG] updating agent")
 		context := d.Get(KubernetesClusterContextFieldName).(string)
 		forceRemoveVault := d.Get(ForceRemoveVaultOnDeleteFieldName).(bool)
-		err := deleteAgent(context, forceRemoveVault)
+		err := deleteAgent(context, forceRemoveVault, ctx, serviceApi, httpClientWrapper, updatedCluster.ID)
 		if err != nil {
 			return err
 		}
