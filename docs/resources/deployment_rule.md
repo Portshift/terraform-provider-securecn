@@ -71,5 +71,3 @@ Optional:
 - `psp_profile` (String)
 - `vulnerability_on_violation_action` (String)
 - `vulnerability_severity_level` (String)
-
-

@@ -66,5 +66,3 @@ Required:
 
 - `enforcement_option` (String) The enforcement type for this policy
 - `permissible_vulnerability_level` (String) The level of risk accepted in this policy
-
-

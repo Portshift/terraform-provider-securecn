@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 )
 
-func ExtractTarGz(gzipStream io.Reader, destinationDir string) error {
+func ExtractTarGz(gzipStream io.Reader) error {
 	log.Print("[DEBUG] untaring file")
 
 	uncompressedStream, err := gzip.NewReader(gzipStream)
@@ -31,7 +31,7 @@ func ExtractTarGz(gzipStream io.Reader, destinationDir string) error {
 			log.Fatalf("ExtractTarGz: Next() failed: %s", err.Error())
 		}
 
-		entryFile := destinationDir + "/" + header.Name
+		entryFile := header.Name
 
 		switch header.Typeflag {
 		case tar.TypeDir:

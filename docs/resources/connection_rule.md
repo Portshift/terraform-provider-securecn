@@ -131,5 +131,3 @@ Optional:
 
 - `environments` (List of String)
 - `vulnerability_severity_level` (String)
-
-

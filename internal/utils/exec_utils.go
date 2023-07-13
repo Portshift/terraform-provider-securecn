@@ -36,11 +36,6 @@ func ExecBashCommand(command string) (string, error) {
 func ExecuteScript(scriptPath string, multiClusterCertsFolder string, skipReadyCheck bool, kubeconfig string) (string, error) {
 	log.Printf("[DEBUG] executing script")
 
-	err := MakeExecutable(scriptPath)
-	if err != nil {
-		return "", err
-	}
-
 	command := "./" + scriptPath
 	if multiClusterCertsFolder != "" {
 		command = command + " -c " + multiClusterCertsFolder

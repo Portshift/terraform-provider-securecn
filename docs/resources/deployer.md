@@ -40,5 +40,3 @@ Optional:
 
 - `rule_creation` (Boolean) Enable connection rule creation for this deployer
 - `security_check` (Boolean) Enable security checks for this deployer
-
-
