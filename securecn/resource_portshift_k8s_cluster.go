@@ -784,7 +784,7 @@ func validateConfig(d *schema.ResourceData) error {
 	}
 
 	if !kubernetesSecurity && connectionsControl {
-		return errors.New(fmt.Sprintf("invalid configuration. %s is off but %s is on", kubernetesSecurity, connectionsControl))
+		return errors.New(fmt.Sprintf("invalid configuration. %s is off but %s is on", KubernetesSecurityFieldName, ConnectionsControlFieldName))
 	}
 
 	if !installTraceSupport && supportExternalTraceSource {
