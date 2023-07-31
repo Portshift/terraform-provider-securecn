@@ -766,7 +766,10 @@ func validateConfig(d *schema.ResourceData) error {
 	isMultiCluster := d.Get(MultiClusterCommunicationSupportFieldName).(bool)
 	multiClusterFolder := d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string)
 	connectionsControl := d.Get(ConnectionsControlFieldName).(bool)
-	kubernetesSecurity := d.Get(KubernetesSecurityFieldName).(bool)
+	kubernetesSecurity := true
+	if d.Get(KubernetesSecurityFieldName) != nil {
+		kubernetesSecurity = d.Get(KubernetesSecurityFieldName).(bool)
+	}
 	inspectIncomingClusterConnections := d.Get(InspectIncomingClusterConnectionsFieldName).(bool)
 	installTraceSupport := d.Get(InstallTracingSupportFieldName).(bool)
 	installEnvoyTraceSupport := d.Get(InstallEnvoyTracingSupportFieldName).(bool)
