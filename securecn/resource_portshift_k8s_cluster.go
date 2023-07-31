@@ -45,6 +45,7 @@ const CiImageValidationFieldName = "ci_image_validation"
 const RestrictRegistriesFieldName = "restrict_registries"
 const CdPodTemplateFieldName = "cd_pod_template"
 const ConnectionsControlFieldName = "connections_control"
+const KubernetesSecurityFieldName = "kubernetes_security"
 const IstioAlreadyInstalledFieldName = "istio_already_installed"
 const IstioVersionFieldName = "istio_version"
 const IstioIngressEnabledFieldName = "istio_ingress_enabled"
@@ -100,6 +101,7 @@ func ResourceCluster() *schema.Resource {
 			CdPodTemplateFieldName:            {Type: schema.TypeBool, Optional: true, Default: false, Description: "Identify pod templates only originating from SecureCN CD plugin"},
 			RestrictRegistriesFieldName:       {Type: schema.TypeBool, Optional: true, Default: false, Description: "Workload from untrusted registries will be marked as 'unknown'"},
 			ConnectionsControlFieldName:       {Type: schema.TypeBool, Optional: true, Default: true, Description: "Enable connections control"},
+			KubernetesSecurityFieldName:       {Type: schema.TypeBool, Optional: true, Default: true, Description: "Enable kubernetes security"},
 			IstioAlreadyInstalledFieldName:    {Type: schema.TypeBool, Optional: true, Default: false, Description: "if false, istio will be installed, otherwise the controller will use the previously installed istio"},
 			IstioVersionFieldName:             {Type: schema.TypeString, Optional: true, Default: nil, Computed: true, Description: "if istio already installed, this specifies its version"},
 			IstioIngressEnabledFieldName:      {Type: schema.TypeBool, Optional: true, Computed: true, Description: "If installing Istio, use Istio ingress"},
@@ -545,6 +547,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 	cdPodTemplate := d.Get(CdPodTemplateFieldName).(bool)
 	restrictRegistries := d.Get(RestrictRegistriesFieldName).(bool)
 	connectionsControl := d.Get(ConnectionsControlFieldName).(bool)
+	kubernetesSecurity := d.Get(KubernetesSecurityFieldName).(bool)
 	istioAlredyInstalled := d.Get(IstioAlreadyInstalledFieldName).(bool)
 	istioVersion := d.Get(IstioVersionFieldName).(string)
 	istioIngressEnabled := d.Get(IstioIngressEnabledFieldName).(bool)
@@ -600,6 +603,7 @@ func getClusterFromConfig(d *schema.ResourceData) (*model.KubernetesCluster, err
 		CiImageValidation:                 &ciImageValidation,
 		ClusterPodDefinitionSource:        clusterPodDefinitionSource,
 		EnableConnectionsControl:          &connectionsControl,
+		KubernetesSecurity:                &kubernetesSecurity,
 		ID:                                "",
 		IsHoldApplicationUntilProxyStarts: &holdApplicationUntilProxyStarts,
 		IsIstioIngressEnabled:             &istioIngressEnabled,
@@ -685,6 +689,7 @@ func updateMutableFields(d *schema.ResourceData, secureCNCluster *model.Kubernet
 	_ = d.Set(CiImageValidationFieldName, secureCNCluster.CiImageValidation)
 	_ = d.Set(CdPodTemplateFieldName, secureCNCluster.ClusterPodDefinitionSource == "CD")
 	_ = d.Set(ConnectionsControlFieldName, secureCNCluster.EnableConnectionsControl)
+	_ = d.Set(KubernetesSecurityFieldName, secureCNCluster.KubernetesSecurity)
 	if secureCNCluster.IstioInstallationParameters == nil {
 		_ = d.Set(IstioAlreadyInstalledFieldName, nil)
 		_ = d.Set(IstioVersionFieldName, nil)
@@ -761,6 +766,7 @@ func validateConfig(d *schema.ResourceData) error {
 	isMultiCluster := d.Get(MultiClusterCommunicationSupportFieldName).(bool)
 	multiClusterFolder := d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string)
 	connectionsControl := d.Get(ConnectionsControlFieldName).(bool)
+	kubernetesSecurity := d.Get(KubernetesSecurityFieldName).(bool)
 	inspectIncomingClusterConnections := d.Get(InspectIncomingClusterConnectionsFieldName).(bool)
 	installTraceSupport := d.Get(InstallTracingSupportFieldName).(bool)
 	installEnvoyTraceSupport := d.Get(InstallEnvoyTracingSupportFieldName).(bool)
@@ -775,6 +781,10 @@ func validateConfig(d *schema.ResourceData) error {
 
 	if !connectionsControl && inspectIncomingClusterConnections {
 		return errors.New(fmt.Sprintf("invalid configuration. %s is off but %s is on", MultiClusterCommunicationSupportCertsPathFieldName, InspectIncomingClusterConnectionsFieldName))
+	}
+
+	if !kubernetesSecurity && connectionsControl {
+		return errors.New(fmt.Sprintf("invalid configuration. %s is off but %s is on", kubernetesSecurity, connectionsControl))
 	}
 
 	if !installTraceSupport && supportExternalTraceSource {
