@@ -766,10 +766,6 @@ func validateConfig(d *schema.ResourceData) error {
 	isMultiCluster := d.Get(MultiClusterCommunicationSupportFieldName).(bool)
 	multiClusterFolder := d.Get(MultiClusterCommunicationSupportCertsPathFieldName).(string)
 	connectionsControl := d.Get(ConnectionsControlFieldName).(bool)
-	kubernetesSecurity := true
-	if d.Get(KubernetesSecurityFieldName) != nil {
-		kubernetesSecurity = d.Get(KubernetesSecurityFieldName).(bool)
-	}
 	inspectIncomingClusterConnections := d.Get(InspectIncomingClusterConnectionsFieldName).(bool)
 	installTraceSupport := d.Get(InstallTracingSupportFieldName).(bool)
 	installEnvoyTraceSupport := d.Get(InstallEnvoyTracingSupportFieldName).(bool)
@@ -784,10 +780,6 @@ func validateConfig(d *schema.ResourceData) error {
 
 	if !connectionsControl && inspectIncomingClusterConnections {
 		return errors.New(fmt.Sprintf("invalid configuration. %s is off but %s is on", MultiClusterCommunicationSupportCertsPathFieldName, InspectIncomingClusterConnectionsFieldName))
-	}
-
-	if !kubernetesSecurity && connectionsControl {
-		return errors.New(fmt.Sprintf("invalid configuration. %s is off but %s is on", KubernetesSecurityFieldName, ConnectionsControlFieldName))
 	}
 
 	if !installTraceSupport && supportExternalTraceSource {
