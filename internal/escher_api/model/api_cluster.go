@@ -41,7 +41,7 @@ type KubernetesCluster struct {
 	EnableConnectionsControl *bool `json:"enableConnectionsControl"`
 
 	// indicates whether kubernetes security turned on
-	KubernetesSecurity *bool `json:"kuberenetesSecurity"`
+	KubernetesSecurity *bool `json:"kubernetesSecurity"`
 
 	// external ca
 	ExternalCa *bool `json:"useExternalCA,omitempty"`
