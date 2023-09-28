@@ -60,12 +60,6 @@ func ResourceDeployer() *schema.Resource {
 							Type:        schema.TypeBool,
 							Default:     false,
 						},
-						"rule_creation": {
-							Description: "Enable connection rule creation for this deployer",
-							Optional:    true,
-							Type:        schema.TypeBool,
-							Default:     false,
-						},
 					},
 				},
 			},
