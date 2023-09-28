@@ -4,6 +4,6 @@ nodes:
   - role: control-plane
     image: kindest/node:v1.24.13@sha256:c9e00e2b228e47ba3c96eaf0309b27dc3f73e444944e4c900016fd07b1b805cb
   - role: worker
-    image: kindest/node:v1.22.15@sha256:c9e00e2b228e47ba3c96eaf0309b27dc3f73e444944e4c900016fd07b1b805cb
+    image: kindest/node:v1.24.15@sha256:c9e00e2b228e47ba3c96eaf0309b27dc3f73e444944e4c900016fd07b1b805cb
   - role: worker
     image: kindest/node:v1.24.13@sha256:c9e00e2b228e47ba3c96eaf0309b27dc3f73e444944e4c900016fd07b1b805cb
