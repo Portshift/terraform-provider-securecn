@@ -41,9 +41,6 @@ type OperatorDeployer struct {
 	// Format: uuid
 	NamespaceID strfmt.UUID `json:"namespaceId,omitempty"`
 
-	// rule creation
-	RuleCreation *bool `json:"ruleCreation,omitempty"`
-
 	// security check
 	SecurityCheck *bool `json:"securityCheck,omitempty"`
 }
@@ -96,8 +93,6 @@ func (m *OperatorDeployer) SetID(val strfmt.UUID) {
 
 // NamespaceID gets the namespace Id of this subtype
 
-// RuleCreation gets the rule creation of this subtype
-
 // SecurityCheck gets the security check of this subtype
 
 // UnmarshalJSON unmarshals this object with a polymorphic type from a JSON structure
@@ -119,9 +114,6 @@ func (m *OperatorDeployer) UnmarshalJSON(raw []byte) error {
 		// namespace Id
 		// Format: uuid
 		NamespaceID strfmt.UUID `json:"namespaceId,omitempty"`
-
-		// rule creation
-		RuleCreation *bool `json:"ruleCreation,omitempty"`
 
 		// security check
 		SecurityCheck *bool `json:"securityCheck,omitempty"`
@@ -174,8 +166,6 @@ func (m *OperatorDeployer) UnmarshalJSON(raw []byte) error {
 
 	result.NamespaceID = data.NamespaceID
 
-	result.RuleCreation = data.RuleCreation
-
 	result.SecurityCheck = data.SecurityCheck
 
 	*m = result
@@ -205,9 +195,6 @@ func (m OperatorDeployer) MarshalJSON() ([]byte, error) {
 		// Format: uuid
 		NamespaceID strfmt.UUID `json:"namespaceId,omitempty"`
 
-		// rule creation
-		RuleCreation *bool `json:"ruleCreation,omitempty"`
-
 		// security check
 		SecurityCheck *bool `json:"securityCheck,omitempty"`
 	}{
@@ -219,8 +206,6 @@ func (m OperatorDeployer) MarshalJSON() ([]byte, error) {
 		Namespace: m.Namespace,
 
 		NamespaceID: m.NamespaceID,
-
-		RuleCreation: m.RuleCreation,
 
 		SecurityCheck: m.SecurityCheck,
 	},

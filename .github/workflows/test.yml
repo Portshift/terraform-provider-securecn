@@ -54,7 +54,7 @@ jobs:
         run: |
           go generate
 
-      # we will have changes if documentation were not generated. in this case the pipeline will fail.
+      # We will have changes if documentation were not generated. In this case the pipeline will fail.
       - name: Changes validation
         run: |
           if [[ ! -z "$(git status --porcelain)" ]]

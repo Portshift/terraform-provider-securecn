@@ -55,7 +55,6 @@ resource "securecn_deployer" "vault" {
     cluster_id      = securecn_k8s_cluster.terraform_cluster.id
     service_account = "vault"
     namespace       = "default"
-    rule_creation   = false
     security_check  = true
   }
 }
