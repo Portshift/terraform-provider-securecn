@@ -184,7 +184,6 @@ func getDeployerFromConfig(ctx context.Context, d *schema.ResourceData, api *esc
 	clusterId := utils2.ReadNestedStringFromTF(d, "operator_deployer", "cluster_id", 0)
 	namespaceName := utils2.ReadNestedStringFromTF(d, "operator_deployer", "namespace", 0)
 	securityCheck := utils2.ReadNestedBoolFromTF(d, "operator_deployer", "security_check", 0)
-	ruleCreation := utils2.ReadNestedBoolFromTF(d, "operator_deployer", "rule_creation", 0)
 	serviceAccountName := utils2.ReadNestedStringFromTF(d, "operator_deployer", "service_account", 0)
 
 	serviceAccounts, err := api.GetDeployersServiceAccountsByNamespace(ctx, strfmt.UUID(clusterId), namespaceName)
@@ -220,7 +219,6 @@ func getDeployerFromConfig(ctx context.Context, d *schema.ResourceData, api *esc
 	deployer := &model2.OperatorDeployer{
 		ClusterID:     strfmt.UUID(clusterId),
 		SecurityCheck: &securityCheck,
-		RuleCreation:  &ruleCreation,
 		NamespaceID:   namespace.ID,
 	}
 
